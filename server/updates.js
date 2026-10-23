@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-24y',title:'24/10 (sửa lỗi)',items:['Mọi người đã thấy Lính Cát đầu đội của nhau đi theo chủ (cả dạng Huyền Thoại Lv50 có vòng aura, Mèn Mén có dòng Huyền Thoại / Motion). Trước đây ai cũng chỉ thấy con của mình']},
   {v:'2026-10-24x',title:'24/10 · Poker, Ma sói mới · Nhà giải trí ở mọi map',items:[
     '🎲 Map nào cũng có Nhà giải trí (Đà Lạt, MU, Ngoại Hạng Anh, Miếu, DAS, Bearplus, Lavi, VNPT, Lumen, Everfit, 120 Yên Lãng, Nghiện Motion, Pickleball): vào chung 1 nhà, ra cửa là về đúng map đã vào',
     '🪩 Phòng Bay tách ra thành nhà riêng ở phố Đà Bắc, cạnh đường Hà Phạm',

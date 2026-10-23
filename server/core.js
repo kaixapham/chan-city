@@ -103,7 +103,9 @@ function note(pl,msg,kind){ send(pl,{t:'note',msg,kind:kind||''}); }
 
 /* ---------- cảnh ---------- */
 // thông tin hiển thị của 1 người (gửi cho người khác lần đầu thấy, hoặc khi đổi đồ)
-function info(pl){ return {t:'pj',id:pl.pid,n:pl.prof.name,l:pl.prof.look,lv:pl.prof.level,tag:pl.tag?pl.tag():'',pt:S.petState(pl.prof,now())==='sulk'?'':pl.prof.pet||'',bn:(pl.prof.items.den_bingo||0)>0?1:0,rk:module.exports.rankOf?module.exports.rankOf(pl.uid):0}; }   // rk: hạng top 10 đại gia (lb.js)   // bn: có đèn bí ngô theo chân
+function info(pl){ return {t:'pj',id:pl.pid,n:pl.prof.name,l:pl.prof.look,lv:pl.prof.level,tag:pl.tag?pl.tag():'',pt:S.petState(pl.prof,now())==='sulk'?'':pl.prof.pet||'',lc:lcLead(pl.prof),bn:(pl.prof.items.den_bingo||0)>0?1:0,rk:module.exports.rankOf?module.exports.rankOf(pl.uid):0}; }   // rk: hạng top 10 đại gia (lb.js)   // bn: có đèn bí ngô theo chân
+// Lính Cát đầu đội (còn sức) gửi kèm thông tin người chơi để người khác thấy nó đi theo: 'loài' hoặc 'loài*' (dạng Lv50)
+function lcLead(p){ const m=p&&p.skills&&p.skills.linhcat&&p.lc&&p.lc.party&&p.lc.party[0]; return m&&m.hp>0?m.sp+(m.asc?'*':''):''; }
 function refreshInfo(pl){ for(const q of players.values()) if(q.sent&&q.sent.has(pl.pid)) q.sent.delete(pl.pid); }
 // chuyển người chơi sang cảnh khác; x,y theo ô
 function moveTo(pl,id,x,y,extra={}){
@@ -118,5 +120,5 @@ function moveTo(pl,id,x,y,extra={}){
 }
 
 module.exports={spent,fineOf,stats,S,T,db,players,byUid,scenes,handlers,hooks,on,hook,today,now,send,sceneOf,kindOf,nearby,broadcastNear,broadcastScene,broadcastAll,dist,near,
-  simPerk,defaults,fixProfile,markDirty,save,publicProfile,take,give,earn,has,addItem,track,hungerLevel,expMul,speedMul,gainExp,reward,note,info,refreshInfo,moveTo,
+  simPerk,defaults,fixProfile,markDirty,save,publicProfile,take,give,earn,lcLead,has,addItem,track,hungerLevel,expMul,speedMul,gainExp,reward,note,info,refreshInfo,moveTo,
   newPid:()=>nextPid++};

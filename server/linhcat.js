@@ -202,4 +202,6 @@ const menErr=pl=>ownSp(pl.prof,L.men.sp)?'Bạn đã có Mèn Mén rồi, như�
 const menLv=p=>{ for(const x of [...(p.lc&&p.lc.party||[]),...(p.lc&&p.lc.box||[])]) if(SP[x.sp]&&SP[x.sp].men) x.ol=p.level; };
 function menGot(pl,mon){ mon.ol=pl.prof.level; require('./world').sysChat(`💩 ${pl.prof.name} vừa thu phục Mèn Mén huyền thoại (Motion) trong rừng Ké!`); }
 function bnGot(pl){ require('./world').sysChat(`🐱 ${pl.prof.name} vừa bắt được Blacknut bằng Bóng Huyền Thoại! "Cũng đúng nhờ"`); }
+// Lính Cát đầu đội đổi (đổi đầu đội, bắt / gửi máy, tiến hoá, thức tỉnh, gục / hồi máu): báo lại thông tin người chơi cho mọi người cùng map
+C.hook('slow',()=>{ for(const pl of C.players.values()){ if(!pl.prof) continue; const k=C.lcLead(pl.prof); if(pl.lcKey!==k){ pl.lcKey=k; C.refreshInfo(pl); } } });
 module.exports={view};
