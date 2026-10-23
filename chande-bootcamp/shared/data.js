@@ -1608,8 +1608,8 @@ const MEGATRON={hp:110*BOSS_HP,optHp:100,speed:2.4,melee:10*BOSS_X,meleeCd:1000,
 // thú hoang ngẫu nhiên: khủng long trong rừng (5 loài, chụp ảnh được thưởng, bạo chúa đến gần thì bị đớp), cá sấu dưới hồ đớp người chèo kayak
 // Ộ i i: NPC đi lang thang ở mọi map (tuyến tự sinh phía máy khách), lại gần thì nói; giao 2 việc: gom khô gà đè tem, hút shisha ở Nhà giải trí
 const OII={lines:['Alo Hải à em','Thôi em đừng có chối'],speed:1.5,dwell:5,skip:['room','stay','track','deo','phongbay','doncongan'],
-  khoga:[['retreat',110,20],['retreat',175,40],['retreat',95,70],['retreat',194,104],['retreat',297,103],['dalat',3,45],['dalat',25,27],['dalat',1,7],
-    ['das',22,11],['das',5,17],['everfit',17,11],['everfit',10,11],['club',16,5],['net',5,9]].map(([scene,x,y])=>({scene,x:x+.5,y:y+.6}))};
+  khoga:[['retreat',110,20],['retreat',175,36],['retreat',95,70],['retreat',194,104],['retreat',297,103],['dalat',4,45],['dalat',25,27],['dalat',4,7],
+    ['das',22,11],['das',5,17],['everfit',17,11],['everfit',10,11],['club',16,5],['net',5,9]].map(([scene,x,y])=>({scene,x:x+.5,y:y+.6}))};   /* 25/10: dời 3 gói nằm trong nhà / bị đồ che sang ô trống đi tới được (Ké 175,40 → 175,36; Đà Lạt 3,45 → 4,45; 1,7 → 4,7), giữ thứ tự để cờ đã nhặt vẫn đúng */
 // góc shisha trong Nhà giải trí: ngồi đệm trái hút cùng Ộ i i; người khác cùng phòng chụp ảnh báo công an được trong lúc đang hút
 const SHISHA={x:21.5,y:12.6,seat:{x:19.9,y:13.3},oii:{x:23.1,y:13.3},dur:12,price:80000,report:{chance:.6,fine:150000,jail:90,bounty:50000,cd:20}};
 // người / thú đi theo 1 người chơi (so tên không dấu, chữ thường); chỉ hiển thị phía máy khách. gap: đi sau chủ bao nhiêu px, side: lệch xuống dưới
