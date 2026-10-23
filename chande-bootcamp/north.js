@@ -96,6 +96,15 @@ function north(r){ const OY=M.OY||0; if(!OY) return r; const W=r.W, H=r.H+OY, sh
   res.zones=[...nz,...oz]; res.districts=res.zones.map(z=>({name:z.name.split(' · ')[0],x:(z.x0+z.x1+1)/2,y:(z.y0+z.y1+1)/2})); return res; }
 const a0=L=>Math.max(...L.map(a=>a.y1));
 const mw=WORLD.muWest; WORLD.muWest=m=>north(mw(m));
+/* MU thêm nhiều lối thông nhau (25/10, chủ game yêu cầu): đục tường '0' trên map đã ghép xong (toạ độ cuối, sau khi dời lên Bắc), ô đục lấy nền của ô đi được gần nhất.
+   Đỉnh Bắc ↔ phía Tây / thị trấn / phía Đông: thêm 4 khe; phía Tây ↔ thị trấn + rừng quái: thêm 3 khe; thị trấn ↔ rừng quái: thêm 3 khe; trong thị trấn: thêm 2 khe */
+const MU_LINKS=[[2,30,4,31],[59,30,63,31],[115,30,118,31],[151,30,154,31],[64,36,65,39],[64,62,65,65],[64,88,65,91],[70,59,73,59],[98,59,101,59],[130,59,133,59],[110,45,113,46],[106,47,107,48]];
+function muLinks(r){ const g=r.grid, H=g.length, W=g[0].length, wk=t=>A.WALKABLE.has(t), cut=[];
+  for(const [x0,y0,x1,y1] of MU_LINKS) for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) if(g[y]&&g[y][x]==='0') cut.push([x,y]);
+  for(const [x,y] of cut){ let best=null; for(let d=1;d<6&&!best;d++) for(const [dx,dy] of [[0,-d],[0,d],[-d,0],[d,0]]){ const t=g[y+dy]&&g[y+dy][x+dx]; if(t&&t!=='0'&&wk(t)){ best=t; break; } } g[y][x]=best||'9'; }
+  return r; }
+const mw2=WORLD.muWest; WORLD.muWest=m=>muLinks(mw2(m));
+
 const an0=X.anim; X.anim=(o,clock)=>{ const f=Math.floor(clock*2)%2;
   if(o.anim==='ncmd') return command(f); if(o.anim==='npylon') return pylon(o.col,Math.floor(clock*3)%2); if(o.anim==='ncons') return consoleBox(Math.floor(clock*4)%2); if(o.anim==='nshrine') return shrine(Math.floor(clock*1.5)%2); if(o.anim==='nnote') return note(Math.floor(clock*3)%2);
   return an0?an0(o,clock):null; };

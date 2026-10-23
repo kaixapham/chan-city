@@ -8,7 +8,8 @@ const {S,T,on,now,send,give,addItem,markDirty}=C;
 const F=S.MU.forest, KI=Object.keys(F.mobs);
 const MOBS=new Map(); let SEQ=1;
 const rnd=(a,b)=>a+Math.random()*(b-a);
-function make(k,pi,i){ const m=F.mobs[k], [px,py]=m.packs[pi], a=i*2.1+pi; const hx=px+Math.cos(a)*1.4, hy=py+Math.sin(a)*.9;
+function make(k,pi,i){ const m=F.mobs[k], [px,py]=m.packs[pi], ring=Math.floor(i/6), a=i*2.1+pi+ring*.5, r=1.4+ring*1.3, Z=m.zone;   /* ổ đông: vòng 6 con, vòng sau rộng hơn, không ra khỏi vùng */
+  const hx=Math.max(Z.x0+1,Math.min(Z.x1-1,px+Math.cos(a)*r)), hy=Math.max(Z.y0+1,Math.min(Z.y1-1,py+Math.sin(a)*r*(ring?.7:.9)));
   return {id:SEQ++,k,pi,i,hx,hy,x:hx,y:hy,wx:hx,wy:hy,wait:0,hp:m.hp,max:m.hp,st:0,tgt:0,cd:0,wind:0,ax:0,ay:0,face:1,back:false,dmg:new Map(),dead:0}; }
 for(const [k,m] of Object.entries(F.mobs)) m.packs.forEach((_,pi)=>{ for(let i=0;i<m.n;i++){ const o=make(k,pi,i); MOBS.set(o.id,o); } });
 const SHOTS=[];   // đạn quái đánh xa đang bay: {o,q,x,y,at,dmg}
@@ -46,9 +47,9 @@ function tick(){ const t=now(), dt=Math.min(.5,(t-lastT)/1000); lastT=t; if(!MU.
   for(let i=SHOTS.length-1;i>=0;i--){ const s=SHOTS[i]; if(t<s.at) continue; SHOTS.splice(i,1); const q=s.q, m=F.mobs[s.o.k];
     if(live.includes(q)&&Math.hypot(q.x/T-s.x,q.y/T-s.y)<=1.1) MU.hurtP(q,s.dmg,`Bị ${m.name} hạ gục`,{mob:s.o.id}); }
   sync(); }
-// gửi mỗi người các con quái trong 22 ô: [id, loài, x×10, y×10, % máu, trạng thái, hướng]; chỉ gửi khi đổi
+// gửi mỗi người các con quái trong khung 16 × 11 ô quanh mình (rừng đông ×10: vừa đủ màn hình, đỡ tốn băng thông): [id, loài, x×10, y×10, % máu, trạng thái, hướng]; chỉ gửi khi đổi
 function sync(){ for(const pl of MU.inScene()){ if(!pl.ws||pl.ws.readyState!==1) continue; const px=pl.x/T, py=pl.y/T, L=[];
-    if(py>S.MU.town-12) for(const o of MOBS.values()){ if(o.dead||Math.abs(o.x-px)>22||Math.abs(o.y-py)>16) continue; L.push([o.id,KI.indexOf(o.k),Math.round(o.x*10),Math.round(o.y*10),Math.ceil(o.hp/o.max*100),o.st,o.face]); }
+    if(py>S.MU.town-12) for(const o of MOBS.values()){ if(o.dead||Math.abs(o.x-px)>16||Math.abs(o.y-py)>11) continue; L.push([o.id,KI.indexOf(o.k),Math.round(o.x*10),Math.round(o.y*10),Math.ceil(o.hp/o.max*100),o.st,o.face]); }
     const key=JSON.stringify(L); if(key===pl._mobKey) continue; pl._mobKey=key; send(pl,{t:'mumob',l:L}); } }
 setInterval(()=>{ try{ tick(); }catch(e){ console.error('[muforest]',e); } },200);
 // trúng đòn người chơi: cộng phần sát thương, quay sang đánh người đó; hết máu thì chia thưởng
