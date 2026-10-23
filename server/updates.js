@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25i',title:'25/10 (sửa lỗi) · Nhà giải trí',items:['🎲 Sửa Nhà giải trí ở các map ngoài Ké (Đà Lạt, MU, Ngoại Hạng Anh, Miếu, DAS, Bearplus, Lavi, VNPT, Lumen, Everfit, 120 Yên Lãng, Nghiện Motion, Pickleball) đứng trước cửa không hiện nút vào: giờ bấm E là vào']},
   {v:'2026-10-25h',title:'25/10 (sửa lỗi) · Khô gà',items:['🐔 Sửa 3 gói khô gà nằm trong nhà hoặc bị đồ che không nhặt được (1 gói ở Ké, 2 gói ở Đà Lạt): đã dời ra chỗ trống đi tới được. Gói nào đã nhặt vẫn tính']},
   {v:'2026-10-25g',title:'25/10 · CLB Lính Cát trên bản đồ Ké',items:['🗺 Minimap và bản đồ lớn ở Ké hiện 15 CLB Lính Cát bằng Bóng Cát: võ đài đỏ (đã có huy hiệu thì vàng), CLB luyện tập xanh. Bấm vào là tự đi tới gặp HLV']},
   {v:'2026-10-25f',title:'25/10 · Đồ trang trí nhà rẻ đi 20 lần',items:['🛋 Mọi đồ nội thất, sàn, tường để trang trí nhà riêng giờ rẻ đi 20 lần (ví dụ giường gỗ 1.200.000đ → 60.000đ, món đắt nhất 8.000.000đ → 400.000đ). Giá mở rộng nhà giữ nguyên']},

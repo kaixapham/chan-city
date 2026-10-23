@@ -345,6 +345,7 @@ function nearest(){
   for(const it of S.map.inter){ const d=dist(it.x,it.y); if(d<it.r) consider(d,{type:'obj',it,label:it.label}); }
   for(const o of S.map.obj||[]) if(o.grab){ const d=dist(o.x,o.y+4); if(d<30) consider(d+1,{type:'grab',label:'Gọi Grab (G) · đi map khác / về phòng'}); }   // đứng gần biển Grab
   for(const st of SD.BIKESHARE.stations) if(st.map===k){ const d=dist(st.x*T,st.y*T); if(d<40) consider(d,{type:'bikeshare',label:`Thuê xe đạp công cộng · ${fmt(SD.MOTO.models.xedap.price)}/${SD.BIKESHARE.min} phút`}); }   // trạm ở Ké và nông trại bác Trang (Đà Lạt)
+  { const cd=k!=='retreat'&&SD.CLUB_DOORS[k]; if(cd){ const d=dist(cd.x*T,cd.y*T); if(d<26) consider(d,{type:'enter',place:'club_'+k,label:'Vào Nhà giải trí'}); } }   /* Nhà giải trí ở các map khác Ké (cửa ở Ké xét chung với PLACES bên dưới) */
   if(k==='retreat'){
     for(const [key,pc] of Object.entries(SD.PLACES)) if(pc.door&&(pc.map||'retreat')===S.kind){ const d=dist(pc.door.x*T,pc.door.y*T); if(d<26) consider(d,pc.scene?{type:'enter',place:key,label:'Vào '+pc.name}:{type:'place',place:key,label:pc.name}); }
     SD.PARK.spots.forEach((sp,i)=>{ const d=dist(sp.x*T,sp.y*T); if(d<30) consider(d,{type:'parkspot',i,label:'Quan sát: '+sp.name}); });
