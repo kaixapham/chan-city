@@ -58,7 +58,9 @@ function drawGear(list,ctx,cam,clock){ for(const o of gearPeople()){ const seat=
   if(!w||!w.store||o.atk) continue; const s=A.muWeapon(o.lk.wep); if(!s) continue; const wl=o.lk.wl|0, back=o.view==='up', side=o.view==='side', f=side?o.face:1;
   const hx=side?o.face*5:back?-6:7, hy=-12+Math.round(Math.sin(clock*(o.mv?9:2.2))*(o.mv?1:.5)), ang=side?(o.face>0?.18:-.18):back?-.6:.35;
   list.push({y:o.y+(back?-.5:.35),d:()=>{ ctx.save(); ctx.translate(X0+hx,Y0+hy); if(f<0) ctx.scale(-1,1); ctx.rotate(ang); ctx.scale(.72,.72);
-    if(wl>=7){ ctx.shadowColor=M.welems[w.el].col; ctx.shadowBlur=3+(wl-6)*2; } ctx.drawImage(s.c,-s.px,-s.py); ctx.restore(); }});
+    const ws=o.lk.ws; if(ws){ ctx.shadowColor=Math.sin(clock*5+o.x*.1)>0?'#7de07a':'#ffd84a'; ctx.shadowBlur=7; } else if(wl>=7){ ctx.shadowColor=M.welems[w.el].col; ctx.shadowBlur=3+(wl-6)*2; } ctx.drawImage(s.c,-s.px,-s.py);
+    if(ws){ ctx.shadowBlur=0; ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.22+.14*Math.sin(clock*6); ctx.drawImage(s.c,-s.px,-s.py); } ctx.restore(); }});   /* đã khảm: viền sáng xanh lá / vàng đổi nhịp + phủ sáng mạ vàng */
+  if(o.lk.ws&&here()&&Math.random()<.14){ const FX=U(); if(FX) FX.burst(o.x+hx*.6+FX.rnd(-5,5),o.y-22+FX.rnd(-5,5),1,{col:['#7de07a','#ffd84a','#fff3b0'],kind:'star',sp:[5,18],life:[.3,.7],size:[1,2]}); }
   if(wl>=7&&here()&&Math.random()<.04*(wl-6)){ const FX=U(); if(FX) FX.burst(o.x+hx*.6+FX.rnd(-4,4),o.y-22+FX.rnd(-4,4),1,{col:[M.welems[w.el].col,'#ffffff'],kind:'star',sp:[5,15],life:[.3,.6],size:[1,2]}); } } }
 
 /* ======================= vẽ + lớp chữ + minimap ======================= */
@@ -122,6 +124,10 @@ UI.defPlace('muenchant',()=>UI.open('Phù Thuỷ Cường Hoá',()=>{ const g=G(
   <div class="enbar"><span><img src="${GAME.icon64('ngoc_ch')}" width="28" height="28" alt=""> Ngọc Cường Hoá: <b>${n}</b></span><span><img src="${GAME.icon64('ngoc_ch_ht')}" width="28" height="28" alt=""> Ngọc Huyền Thoại (${Math.round(E.legendRate*100)}%): <b>${nh}</b></span>
     <span>${btn('enhbuy','Mua 1 ngọc · '+SD.fmt(SD.gemCost(1)),{n:1})}${btn('enhbuy',`Mua 5 · ${SD.fmt(SD.gemCost(5))} <small>(tiết kiệm ${SD.fmt(SD.gemCost(1)*5-SD.gemCost(5))})</small>`,{n:5},'pri')}${btn('enhgift','🎁 Quà Lính Cát huyền thoại',{})}</span></div>
   <p class="muted">Lính Cát đầu đội cấp càng cao càng cộng tỉ lệ (cấp × ${(E.lcPer*100).toFixed(1)}%, tối đa +${Math.round(E.lcMax*100)}%): đang cộng <b class="good">+${(lb*100).toFixed(1)}%</b>. Ngọc rơi từ boss, quái rừng phía Nam, nhiệm vụ ẩn, vớt dưới hồ Ké.</p>
+  ${me.fruit&&M.fruits[me.fruit]?(()=>{ const f=M.fruits[me.fruit], L=me.fenh|0, max=L>=E.max, rate=max?0:Math.min(.99,E.rate[L]+lb), x1=v=>String(Math.round(v*100)/100).replace('.',','), m0=SD.fruitMul(L), m1=SD.fruitMul(L+1);
+    return `<div class="enlist"><div class="enrow on fenrow"><img src="${GAME.icon64('taq_'+me.fruit)}" width="48" height="48" alt=""><div class="enmid"><b>🍇 ${esc(f.name)} ${L?`<span class="enlv">+${L}</span>`:''} <small class="good">đang ăn</small></b>${holes(L)}
+      <small>${max?'<span class="good">Trái đã cường hoá đủ 12 lỗ!</span>':`Lỗ ${L+1}: <b>${Math.round(rate*100)}%</b> · phí ${SD.fmt(E.fee(L))}`} · chiêu bị động ${esc(f.skill.name)} ×${x1(m0)}${max?'':` → ×${x1(m1)}`} · chỉ số trái ×${x1(m0)}</small></div>
+      <div class="enbtn">${max?'':btn('fenh','Khắc',{},'pri')+(nh?btn('fenh','Ngọc HT',{legend:1}):'')}</div></div></div>`; })():''}
   <div class="enlist">${enhItems().map(x=>{ const L=enh[x.k]||0, max=L>=E.max, rate=max?0:Math.min(.99,E.rate[L]+lb), per=L&&bonusTxt(Object.fromEntries(Object.entries(E.per[SD.enhKind(x.k)]||{}).map(([s,v])=>[s,v*L])));
     const mn=Object.entries(SD.enhMain(x.k)).filter(([,v])=>v), p1=v=>String(Math.round(v*1000)/10).replace('.',','), mm=SD.enhMul(L), mx=SD.enhMul(Math.min(E.max,L+1));
     const main=mn.length?`<small class="enmain">⭐ Chỉ số chính ${L?`×${String(Math.round(mm*100)/100).replace('.',',')}`:''}: ${mn.map(([s,v])=>`${STAT_VI[s]||s} +${p1(v*mm)}%${max?'':` <i>(lỗ tới +${p1(v*mx)}%)</i>`}`).join(' · ')}</small>`:'';
@@ -159,6 +165,11 @@ UI.onAct('kqenh',async d=>{ const gem=d.legend?'ngoc_ch_ht':'ngoc_ch'; if(!(G().
   if(r.ok){ GAME.sfx('level_up',.9); if(FX){ FX.burst(P.x,P.y-20,40,{col:['#f2c43d','#6fe0a0','#ffffff'],kind:'star',sp:[40,140],life:[.6,1.2]}); FX.ring(P.x,P.y,6,46,.7,'#6fe0a0',3); FX.shake(3,.2); } }
   else { GAME.sfx('poof',.8); if(FX) FX.shake(5,.3); }
   enhResult(r,d.k,'Vuốt Thần Kim Quy · '+((enhItems().find(x=>x.k===d.k)||{}).name||'')); UI.refresh(); });   /* cường hoá vuốt: cùng thẻ kết quả to giữa màn hình */
+UI.onAct('fenh',async d=>{ const gem=d.legend?'ngoc_ch_ht':'ngoc_ch'; if(!(G().items||{})[gem]) return enhNeed(gem);
+  const r=await NET.req({t:'mu',op:'fenh',legend:d.legend?1:0}); if(!r) return; if(r.err) return enhNeed(/^Cần Ngọc/.test(r.err)?gem:null,r.err); const FX=U(), P=GAME.P, me=U().me()||{}, f=M.fruits[me.fruit]||{};
+  if(r.ok){ GAME.sfx('level_up',.9); if(FX){ FX.burst(P.x,P.y-20,40,{col:[f.col||'#ffd84a','#ffffff'],kind:'star',sp:[40,140],life:[.6,1.2]}); FX.ring(P.x,P.y,6,46,.7,f.col||'#ffd84a',3); FX.shake(3,.2); } }
+  else { GAME.sfx('poof',.8); if(FX) FX.shake(5,.3); }
+  enhResult(r,'',f.name||'Trái Ác Quỷ'); UI.refresh(); });   /* cường hoá Trái Ác Quỷ: cùng thẻ kết quả to giữa màn hình */
 UI.onAct('enhbuy',async d=>{ const r=await GAME.act({t:'mu',op:'enhbuy',n:+d.n||1}); if(r&&!r.err){ GAME.sfx('coin',.5); toast(esc(r.msg),'item'); } UI.refresh(); });
 UI.onAct('enhgift',async()=>{ const r=await GAME.act({t:'mu',op:'enhgift'}); if(r&&!r.err){ GAME.sfx('level_up',.7); toast(esc(r.msg),'item'); } UI.refresh(); });
 UI.onAct('mobsell',async()=>{ const r=await GAME.act({t:'mobsell'}); if(r&&!r.err){ GAME.sfx('coin',.6); toast(esc(r.msg),'vnd'); } UI.refresh(); });

@@ -4,6 +4,10 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25d',title:'25/10 · Khảm vũ khí boss · Chiêu Trái Ác Quỷ, set legacy bị động · Cường hoá trái',items:[
+    '💎 Thợ Rèn MU khảm được vũ khí rơi từ boss (Kunai, Cưa Máy Quỷ, Lưỡi Hái Bóng Đêm, Thương Vảy Rồng) vào vũ khí chính đang cầm, phí 3.000.000đ: vũ khí chính có thêm công + chỉ số của món khảm, sáng óng ánh xanh lá mạ vàng',
+    '🍇 Chiêu Trái Ác Quỷ và chiêu set legacy giờ là chiêu bị động: đang đánh là tự ra khi hết hồi chiêu, không cần ấn, không tốn mana (Chữa Lành tự ra khi máu dưới 60%)',
+    '🔨 Cường hoá Trái Ác Quỷ đang ăn ở Phù Thuỷ Cường Hoá (ngọc, phí, tỉ lệ như khắc lỗ, tối đa +12): mỗi cấp chiêu trái và chỉ số của trái mạnh thêm 7%']},
   {v:'2026-10-25c',title:'25/10 · Bảng Trái Ác Quỷ',items:['🍇 Vệ binh MU hiện đủ 6 Trái Ác Quỷ trong game: trái đang có sáng lên kèm nút Ăn, trái đang ăn có dấu ✔, trái chưa có mờ đi']},
   {v:'2026-10-25b',title:'25/10 · Cân bằng Tiên Nữ (hệ cung)',items:['🏹 Tiên Nữ: chạy nhanh ×2 → ×1,5, tầm bắn đánh thường 8,6 → 6 ô và 3 chiêu giảm 30% (6,2 / 6,4 / 6,4 ô), giáp 6% → 1,8%, máu 285 → 143']},
   {v:'2026-10-25a',title:'25/10 · Tượng Sandra Vũ ở quảng trường MU',items:['🗽 Giữa đài phun nước quảng trường Lục Địa Cát (MU) có tượng Sandra Vũ trên bệ cẩm thạch, biển tên vàng, nước phun quanh bệ']},
