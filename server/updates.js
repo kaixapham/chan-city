@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25g',title:'25/10 · CLB Lính Cát trên bản đồ Ké',items:['🗺 Minimap và bản đồ lớn ở Ké hiện 15 CLB Lính Cát bằng Bóng Cát: võ đài đỏ (đã có huy hiệu thì vàng), CLB luyện tập xanh. Bấm vào là tự đi tới gặp HLV']},
   {v:'2026-10-25f',title:'25/10 · Đồ trang trí nhà rẻ đi 20 lần',items:['🛋 Mọi đồ nội thất, sàn, tường để trang trí nhà riêng giờ rẻ đi 20 lần (ví dụ giường gỗ 1.200.000đ → 60.000đ, món đắt nhất 8.000.000đ → 400.000đ). Giá mở rộng nhà giữ nguyên']},
   {v:'2026-10-25e',title:'25/10 · Rồng Thần mới',items:['🐉 Rồng Thần của Vuốt Thần Kim Quy vẽ lại: mở cổng vàng trên trời, thân vảy vàng bụng ngọc có vây lửa, 4 chân, đuôi lửa, bờm lửa, sừng gạc, râu dài, mắt đỏ; hào quang vàng, mây lành, hạt sáng bay theo; há miệng phun dòng lửa, cột sáng giáng xuống mục tiêu']},
   {v:'2026-10-25d',title:'25/10 · Khảm vũ khí boss · Chiêu Trái Ác Quỷ, set legacy bị động · Cường hoá trái',items:[

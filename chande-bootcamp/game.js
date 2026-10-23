@@ -1597,6 +1597,10 @@ function miniZoom(d){ miniZ=Math.max(0,Math.min(MINI_TW.length-1,miniZ-d)); try{
   $('#miniIn').disabled=miniZ===0; $('#miniOut').disabled=miniZ===MINI_TW.length-1; }
 function buildMini(){ const m=S.map, c=A.cv(S.W,S.H), g=c.getContext('2d'), col=S.kind==='mu'||S.kind==='muw'||S.kind==='dday'?{...MINI_COL,...MINI_MU}:MINI_COL; for(let y=0;y<S.H;y++) for(let x=0;x<S.W;x++){ g.fillStyle=col[m.grid[y][x]]||'#3f7a31'; g.fillRect(x,y,1,1); } miniBase=c; }
 if(window.ResizeObserver) new ResizeObserver(()=>{ const h=$('#minimap').offsetHeight; if(h) document.documentElement.style.setProperty('--miniH',h+'px'); }).observe($('#minimap'));   // nút Tủ đồ/Xếp hạng luôn nằm ngay trên minimap dù minimap cao thêm
+// 15 CLB Lính Cát ở Ké (12 võ đài + 3 CLB luyện tập): Bóng Cát trên minimap + nhãn trên bản đồ lớn (võ đài đỏ, đã có huy hiệu vàng, CLB luyện tập xanh), bấm vào là tự đi tới gặp HLV
+const lcClubs=()=>[...SD.LCCLUB.gyms.map(c=>({id:'lcg_'+c.n,x:c.x,y:c.y-1.4,name:'CLB '+SD.LC_TYPES[c.t].name,gym:1,got:!!(((G.lc&&G.lc.badges)||{})[c.n])})),...SD.LCCLUB.train.map(c=>({id:'lct_'+c.k,x:c.x,y:c.y-1.4,name:c.name,gym:0}))];
+const lcBall=(g,X,Y,c)=>{ g.fillStyle='#1c1516'; g.fillRect(X-4,Y-4,9,9); g.fillStyle=c.gym?(c.got?'#ffd84a':'#e8302a'):'#4ab878'; g.fillRect(X-3,Y-3,7,3); g.fillStyle='#f4f4f2'; g.fillRect(X-3,Y+1,7,3); g.fillStyle='#1c1516'; g.fillRect(X-3,Y,7,1); g.fillStyle='#f4f4f2'; g.fillRect(X-1,Y-1,3,3); g.fillStyle='#1c1516'; g.fillRect(X,Y,1,1); };
+let MINIHIT=[];
 function drawMini(){ const box=$('#minimap'); if(!hasMini()){ box.hidden=true; document.body.classList.add('nomini'); return; } box.hidden=false; document.body.classList.remove('nomini'); if(!miniBase) buildMini();
   const c=$('#miniCv'), g=c.getContext('2d'), TW=Math.min(MINI_TW[miniZ],S.W,S.H*c.width/c.height), TH=TW*c.height/c.width, k=c.width/TW, sx=Math.max(0,Math.min(S.W-TW,P.x/T-TW/2)), sy=Math.max(0,Math.min(S.H-TH,P.y/T-TH/2));
   g.imageSmoothingEnabled=false; g.drawImage(miniBase,sx,sy,TW,TH,0,0,c.width,c.height);
@@ -1608,6 +1612,7 @@ function drawMini(){ const box=$('#minimap'); if(!hasMini()){ box.hidden=true; d
     g.fillStyle='rgba(16,40,56,.85)'; g.fillRect(Math.round(X-w/2),Math.round(Y-8),Math.ceil(w),9); g.fillStyle='#7fe0ff'; g.textAlign='center'; g.fillText(t,Math.round(X),Math.round(Y)); }
   for(const s of khogaHere()) dot(s.x*T,s.y*T,'#ff9f2e',1); for(const s of pumpkinsHere()) dot(s.x*T,s.y*T,'#ff7a1a',1); if(S.kind==='retreat'&&MCKB) dot(MCKB.x*T,MCKB.y*T,'#c070ff',3);
   if(window.MAPX&&MAPX.mini) MAPX.mini(dot,S.kind);   /* chấm riêng của từng map (boss MU...) */
+  MINIHIT=[]; if(S.kind==='retreat') for(const cb of lcClubs()){ const X=Math.round((cb.x-sx)*k), Y=Math.round((cb.y-sy)*k); if(X<4||Y<4||X>c.width-4||Y>c.height-4) continue; lcBall(g,X,Y,cb); MINIHIT.push({X,Y,cb}); }   /* CLB Lính Cát: bấm Bóng Cát là tự đi tới */
   if(S.kind==='retreat'&&WDINO) dot(WDINO.x*T,WDINO.y*T,'#b6ff3a',2); if(S.kind==='retreat'&&WCROC&&!WCROC.dive) dot(WCROC.x*T,WCROC.y*T,'#3a6a2a',1);
   // người chơi ở gần (trong khung minimap): hiện tên nhỏ trên chấm
   g.font='14px VT323, monospace'; g.textAlign='center'; for(const r of REM.values()){ if(!r.name) continue; const X=(r.x/T-sx)*k, Y=(r.y/T-sy)*k; if(X<0||Y<8||X>c.width||Y>c.height) continue;
@@ -1622,7 +1627,9 @@ let WHO=[], whoAt=0, whoHtml='';
 function miniWho(){ const t=performance.now(); if(t-whoAt>6000){ whoAt=t; NET.req({t:'who'}).then(r=>{ WHO=r.list||[]; }).catch(()=>{}); }
   const far=WHO.filter(w=>w.id!==NET.pid&&!REM.has(w.id)), html=far.length?far.slice(0,5).map(w=>`<div>• ${esc(w.n)} <span>${esc((w.where||'').split(' (')[0])}</span></div>`).join('')+(far.length>5?`<div>+${far.length-5} người nữa</div>`:''):'';
   if(html!==whoHtml){ whoHtml=html; $('#miniWho').innerHTML=html; } }
-$('#minimap').addEventListener('click',()=>toggleMap());
+const miniHitAt=e=>{ const c=$('#miniCv'); if(e.target!==c) return null; const rc=c.getBoundingClientRect(), x=(e.clientX-rc.left)*c.width/rc.width, y=(e.clientY-rc.top)*c.height/rc.height; return MINIHIT.find(h=>Math.abs(h.X-x)<=7&&Math.abs(h.Y-y)<=7)||null; };
+$('#minimap').addEventListener('click',e=>{ const h=miniHitAt(e); if(h){ walkToNpc(h.cb.id); toast(`Đi tới <b>${esc(h.cb.name)}</b>`,'quest'); return; } toggleMap(); });   /* bấm Bóng Cát CLB: tự đi tới, bấm chỗ khác: mở bản đồ lớn */
+$('#miniCv').addEventListener('mousemove',e=>{ const h=miniHitAt(e); e.target.style.cursor=h?'pointer':''; e.target.title=h?`${h.cb.name} · bấm để tự đi tới`:''; });
 $('#miniIn').addEventListener('click',e=>{ e.stopPropagation(); miniZoom(1); }); $('#miniOut').addEventListener('click',e=>{ e.stopPropagation(); miniZoom(-1); });
 $('#miniCv').addEventListener('wheel',e=>{ e.preventDefault(); miniZoom(e.deltaY<0?1:-1); },{passive:false}); miniZoom(0);
 $('#mapClose').addEventListener('click',()=>{ $('#mapView').hidden=true; });
@@ -1630,7 +1637,7 @@ $('#mapView').addEventListener('click',e=>{ if(e.target.id==='mapView') $('#mapV
 let MAPHIT=[], MAPHOV='';
 $('#mapCv').addEventListener('mousemove',e=>{ const rc=e.target.getBoundingClientRect(), x=(e.clientX-rc.left)*e.target.width/rc.width, y=(e.clientY-rc.top)*e.target.height/rc.height, h=MAPHIT.find(m=>x>=m.x0&&x<=m.x1&&y>=m.y0&&y<=m.y1);
   const n=h?h.name:''; e.target.style.cursor=h?'pointer':''; e.target.title=h?'Bấm để tự đi tới '+h.name:''; if(n!==MAPHOV){ MAPHOV=n; drawMap(); } });
-$('#mapCv').addEventListener('click',e=>{ const h=MAPHIT.find(m=>m.name===MAPHOV); if(!h) return; e.stopPropagation(); $('#mapView').hidden=true; MAPHOV=''; walkTo(h.tx,h.ty,h.name); });
+$('#mapCv').addEventListener('click',e=>{ const h=MAPHIT.find(m=>m.name===MAPHOV); if(!h) return; e.stopPropagation(); $('#mapView').hidden=true; MAPHOV=''; if(h.npc) walkToNpc(h.npc); else walkTo(h.tx,h.ty,h.name); });
 // chuột phải bất kỳ chỗ nào trên bản đồ lớn: tự đi tới đó (có mũi tên đích như ngoài màn chơi)
 $('#mapCv').addEventListener('contextmenu',e=>{ e.preventDefault(); e.stopPropagation(); const c=e.target, rc=c.getBoundingClientRect(), k=c.width/(S.W*T), wx=(e.clientX-rc.left)*c.width/rc.width/k, wy=(e.clientY-rc.top)*c.height/rc.height/k;
   $('#mapView').hidden=true; MAPHOV=''; DEST={x:wx,y:wy,t:performance.now()}; walkTo(wx/T,wy/T,'chỗ đã chọn'); });
@@ -1651,6 +1658,9 @@ function drawMap(){ const c=$('#mapCv'), g=c.getContext('2d'), m=S.map, ret=S.ki
     g.fillStyle=hov?'#ffd84a':'rgba(28,21,22,.75)'; g.fillRect(x-w/2,y-h+3,w,h); if(hov){ g.strokeStyle='#1c1516'; g.lineWidth=2; g.strokeRect(x-w/2,y-h+3,w,h); } g.fillStyle=hov?'#1c1516':'#fff3d6'; g.fillText(l.name,x,y);
     const d=doors.map(o=>({o,d:Math.hypot(o.x-l.x,(o.y-l.y)*.6)})).filter(z=>z.d<6&&z.o.y>=l.y-1).sort((a,b)=>a.d-b.d)[0];   // nhà có cửa gần nhãn thì đi tới cửa
     MAPHIT.push({name:l.name,x0:x-w/2,y0:y-h+3,x1:x+w/2,y1:y+3,tx:d?d.o.x:l.x,ty:d?d.o.y+.6:l.y+1.5}); }
+  if(ret) for(const cb of lcClubs()){ const X=(cb.x*T-sx)*k, Y=(cb.y*T-sy)*k, hov=MAPHOV===cb.name; g.save(); g.translate(Math.round(X),Math.round(Y)); g.scale(2,2); lcBall(g,0,0,cb); g.restore();   /* CLB Lính Cát: Bóng Cát + nhãn, bấm là tự đi tới HLV */
+    g.font=`${hov?fs+2:fs-2}px VT323, monospace`; const w=g.measureText(cb.name).width+8, h=hov?18:14, ly=Y-14; g.fillStyle=hov?'#ffd84a':cb.gym?'rgba(120,20,20,.85)':'rgba(20,80,40,.85)'; g.fillRect(X-w/2,ly-h+3,w,h); g.fillStyle=hov?'#1c1516':'#fff3d6'; g.fillText(cb.name,X,ly);
+    MAPHIT.push({name:cb.name,x0:X-Math.max(w/2,12),y0:ly-h+3,x1:X+Math.max(w/2,12),y1:Y+10,tx:cb.x,ty:cb.y+1.1,npc:cb.id}); }
   g.font=`${fs}px VT323, monospace`;
   const dot=(x,y,col,r=4)=>{ g.fillStyle='#1c1516'; g.beginPath(); g.arc((x-sx)*k,(y-sy)*k,r+1.5,0,7); g.fill(); g.fillStyle=col; g.beginPath(); g.arc((x-sx)*k,(y-sy)*k,r,0,7); g.fill(); };
   for(const n of npcs) dot(n.x,n.y,STORY[n.id]?'#ffd84a':'#f4f1ea',3); for(const r of REM.values()) dot(r.x,r.y,'#7fe0ff',3); if(ret&&WDINO) dot(WDINO.x*T,WDINO.y*T,'#b6ff3a',5);
