@@ -40,6 +40,7 @@ function defaults(name){ return {v:3,name,look:null,owned:{},money:S.RULES.start
 // quà theo tên chỉ tính khi đã tạo nhân vật (tên nhân vật không trùng, xem handlers.create);
 // trước khi tạo, tên tạm lấy từ tên đăng nhập / tên Google nên ai cũng có thể đặt trùng
 const giftName=p=>p.look?String(p.name||''):'';
+const noRank=p=>String((p&&p.name)||'').normalize('NFC').trim().toLowerCase()==='kaixa';   /* chủ game (ví ngân khố nhà nước) không lên bảng xếp hạng nào */
 function fixProfile(p,name){ const d=defaults(name); for(const k in d){ if(p[k]===undefined) p[k]=d[k]; else if(d[k]&&typeof d[k]==='object'&&!Array.isArray(d[k])&&p[k]&&typeof p[k]==='object') for(const j in d[k]) if(p[k][j]===undefined) p[k][j]=d[k][j]; }
   // dọn dữ liệu hỏng do lỗi cũ: tiền / EXP thành NaN, đồ số lượng sai, khoá kiểu "constructor"
   if(!Number.isFinite(p.money)) p.money=0; if(!Number.isFinite(p.exp)) p.exp=0;
@@ -58,6 +59,8 @@ function fixProfile(p,name){ const d=defaults(name); for(const k in d){ if(p[k]=
   if(giftName(p).normalize('NFC').toLowerCase()==='leno'&&!(p.flags&&p.flags.gift3mLeno)){ p.money+=3000000; p.flags.gift3mLeno=true; }
   // quà admin đợt 2: Leno và Ben Jr mỗi người được cộng 10.000.000đ (1 lần)
   { const nm=giftName(p).normalize('NFC').toLowerCase(); if((nm==='leno'||nm==='ben jr')&&!(p.flags&&p.flags.gift10m)){ p.money+=10000000; p.flags.gift10m=true; } }
+  // quà admin: Chika Phú được cộng 15.000.000đ (1 lần)
+  if(giftName(p).normalize('NFC').toLowerCase()==='chika phú'.normalize('NFC')&&!(p.flags&&p.flags.gift15mChika)){ p.money+=15000000; p.flags.gift15mChika=true; }
   // người chơi tên Kaixa: tài khoản có 100 triệu (nạp 1 lần)
   if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.vip100)){ p.money=Math.max(p.money,100000000); p.flags.vip100=true; }
   // Kaixa thử tính năng cường hoá: 10 Ngọc Cường Hoá (1 lần)
@@ -137,6 +140,6 @@ function moveTo(pl,id,x,y,extra={}){
 // 1 hook lỗi không được làm hỏng các hook sau hay làm sập server (vd. dữ liệu cũ hỏng trong hồ sơ)
 function runHook(f,...a){ try{ f(...a); }catch(e){ console.error('[hook]',e); } }
 
-module.exports={spent,fineOf,stats,S,T,db,players,byUid,scenes,handlers,hooks,on,hook,today,now,send,sceneOf,kindOf,nearby,broadcastNear,broadcastScene,broadcastAll,dist,near,
+module.exports={noRank,spent,fineOf,stats,S,T,db,players,byUid,scenes,handlers,hooks,on,hook,today,now,send,sceneOf,kindOf,nearby,broadcastNear,broadcastScene,broadcastAll,dist,near,
   simPerk,defaults,fixProfile,runHook,ownerOf,markDirty,save,publicProfile,take,give,earn,lcLead,has,addItem,track,hungerLevel,expMul,speedMul,gainExp,reward,note,beatOff,info,refreshInfo,moveTo,
   newPid:()=>nextPid++};

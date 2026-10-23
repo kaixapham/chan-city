@@ -1017,11 +1017,11 @@ LINHCAT.men={sp:'men_men',cap:1,lv:45,chance:.12,mul:1.5,perLv:1/50,poison:{max:
 /* Blacknut: mèo trắng trùm khăn kín mặt, hay lảng vảng ở nơi làm việc (Lumen, Bearplus, Everfit, VNPT, Nghiện Motion, Lavi, 120 Yên Lãng, DAS): mỗi chu kỳ 40 giây hiện 10 giây ở 1 nơi rồi biến sang map khác.
    Chỉ Bóng Huyền Thoại bắt được, mỗi người 1 con. Đứng đầu đội: chỉ số MU của chủ ×1,2, mọi tiền + EXP chủ tự kiếm được ×2. Thi thoảng nói "Cũng đúng nhờ" / "Cũng là rỉ luôn đấy chứ" */
 LC_SPECIES.blacknut={name:'Blacknut',t:'thuong',t2:'than',st:3,legend:1,bn:1,b:[90,85,90,125],rate:.6,desc:'Mèo trắng trùm khăn kín mặt, chỉ ló đôi mắt hổ phách. Hay lảng vảng ở chỗ làm việc, ở đâu cũng chỉ 10 giây rồi biến. Ai hỏi gì cũng gật gù: "Cũng đúng nhờ".'};
-LINHCAT.bn={sp:'blacknut',lv:40,cycle:40e3,stay:10e3,ball:'bong_ht',stat:.2,mul:2,say:['Cũng đúng nhờ','Cũng là rỉ luôn đấy chứ'],
-  maps:{lumen:[[8.4,26.4]],bearplus:[[18.8,9.4],[13.8,9.2],[17.4,16.4]],everfit:[[9.4,16.4],[13.4,5],[9.4,10]],vnpt:[[12.4,5.8],[22.4,5.8],[27,16.6]],
-    nghienmotion:[[15.4,10.6],[23.8,10.4],[11.8,19.6]],lavi:[[21,13.8],[14.4,14],[10.8,16.8]],yenlang:[[14.6,10.4],[6,7.4],[28.2,12]],das:[[19,15.4],[22.9,8],[8.4,6]]}};
+LINHCAT.bn={sp:'blacknut',lv:40,cycle:40e3,stay:6e3,ball:'bong_ht',stat:.2,mul:2,say:['Cũng đúng nhờ','Cũng là rỉ luôn đấy chứ'],
+  maps:{lumen:[[1.5,2.6],[36.5,2.6],[36.5,9.6]],bearplus:[[32.5,2.6],[1.5,2.6],[32.5,9.6]],everfit:[[32.5,2.6],[32.5,9.6],[32.5,19.6]],vnpt:[[1.5,2.6],[34.5,2.6],[34.5,12.6]],nghienmotion:[[32.5,2.6],[1.5,2.6],[1.5,11.6]],lavi:[[2.5,2.6],[29.5,2.6],[22.5,2.6]],yenlang:[[1.5,2.6],[25.5,2.6],[9.5,2.6]],das:[[1.5,2.6],[28.5,2.6],[1.5,11.6]]}};   /* góc khuất: ô đi tới được sát 2 mặt tường / đồ, xa cửa vào (tìm bằng dò ô đi được từ chỗ vào map), chỉ ở 6 giây */
 LINHCAT.ball.bong_ht=3; LINHCAT.shop.bong_ht=1500000; ITEMS.bong_ht={name:'Bóng Huyền Thoại',icon:'lcball3'};
 for(const sc of Object.keys(LINHCAT.bn.maps)) if(!LINHCAT.maps[sc]) LINHCAT.maps[sc]={spots:[],bn:1};   /* nơi làm việc: không có Lính Cát hoang thường, chỉ Blacknut ghé qua */
+LINHCAT.men.mul=+(LINHCAT.men.mul*.6).toFixed(2);   /* giảm 40% sức mạnh Mèn Mén (24/10, chủ game yêu cầu): chỉ số ×1,5 → ×0,9 (vẫn thêm 2% mỗi cấp của chủ), công ở MU theo công của chủ ×0,9, độc Ném Cứt tính theo công nên cũng giảm theo */
 /* tác dụng của Mèn Mén / Blacknut ghi trên Poke Deck, bảng Huyền Thoại xuất hiện (thanh trên cùng): tính từ số ở LINHCAT.men / LINHCAT.bn */
 { const MN=LINHCAT.men, B=LINHCAT.bn, pc=v=>Math.round(v*100)+'%', x=v=>String(Math.round(v*100)/100).replace('.',',');
   LC_SPECIES.men_men.fx=[`Chỉ số ×${x(MN.mul)}, thêm ${pc(MN.perLv)} mỗi cấp của chủ (chủ cấp 10: ×${x(MN.mul*(1+10*MN.perLv))}, cấp 30: ×${x(MN.mul*(1+30*MN.perLv))})`,
@@ -1383,9 +1383,11 @@ const ENH={max:12,rate:[1,.95,.9,.82,.72,.62,.5,.4,.3,.2,.12,.07].map(v=>v/2),  
 ENH.main=.05; const enhMul=L=>1+(L||0)*ENH.main;
 /* Tẩy tuỷ (Phù Thuỷ Cường Hoá): món +12 rút hết 12 lỗ thành 1 Vuốt Thần Kim Quy (món về +0, không mất món); gắn vuốt vào 1 món +12 khác (mỗi món 1 vuốt, đã gắn thì không tẩy tuỷ được).
    Đang dùng món có vuốt: đánh thường lan (Tiên Nữ, Phù Thuỷ: bắn lan quanh mục tiêu; Chiến Binh, Đại Tượng: chém lan quanh mình), đánh xa hơn, 1% gọi Rồng Thần cắn 0,1% máu tối đa của quái. Dùng nhiều món có vuốt: lan mạnh hơn, dễ gọi rồng hơn */
-ENH.kq={item:'vuot_kim_quy',fee:2000000,splash:.5,splashUp:.1,r:{ban:2.5,chem:0},n:5,reach:{ban:2,chem:1},dragon:{chance:.01,up:.005,pct:.001,r:3,n:6},style:{elf:'ban',dw:'ban',dk:'chem',dt:'chem'},vi:{ban:'Bắn lan',chem:'Chém lan'}};
+ENH.kq={item:'vuot_kim_quy',fee:2000000,splash:.5,splashUp:.1,r:{ban:2.5,chem:0},n:5,reach:{ban:2,chem:1},dragon:{chance:.01,up:.005,pct:.001,r:3,n:6},style:{elf:'ban',dw:'ban',dk:'chem',dt:'chem'},vi:{ban:'Bắn lan',chem:'Chém lan'},
+  lv:{splash:.03,reach:.15,r:.1,chance:.001,pct:.25}};   /* cường hoá vuốt (khắc như đồ, tối đa +12): mỗi cấp lan +3%, tầm +0,15 ô, vòng bắn lan +0,1 ô, gọi rồng +0,1%, rồng cắn mạnh thêm 25% */
 ITEMS.vuot_kim_quy={name:'Vuốt Thần Kim Quy',icon:'kqclaw'};
-const kqOf=(cls,n)=>{ if(!n) return null; const K=ENH.kq, sty=K.style[cls]||'chem'; return {n,sty,reach:K.reach[sty],r:K.r[sty],splash:K.splash+K.splashUp*(n-1),chance:K.dragon.chance+K.dragon.up*(n-1)}; };   /* r 0 = chém quanh mình trong cả tầm đánh */
+const kqOf=(cls,n,lv=0)=>{ if(!n) return null; const K=ENH.kq, V=K.lv, sty=K.style[cls]||'chem';   /* lv: cấp vuốt cao nhất trong các món đang dùng */
+  return {n,lv,sty,reach:K.reach[sty]+V.reach*lv,r:K.r[sty]?K.r[sty]+V.r*lv:0,splash:K.splash+K.splashUp*(n-1)+V.splash*lv,chance:K.dragon.chance+K.dragon.up*(n-1)+V.chance*lv,pct:K.dragon.pct*(1+V.pct*lv)}; };   /* r 0 = chém quanh mình trong cả tầm đánh */
 const enhMain=k=>{ const w=MU.weapons[k], L=MU.legacy[k], a=MU.acc[k]; return w?{...(w.atk?{atk:w.atk}:{}),...(w.bonus||{})}:L?{...(L.bonus||{})}:a?{...(a.bonus||{})}:{}; };
 const gemCost=n=>n===ENH.gemPack.n?ENH.gemPack.price:ENH.gemPrice*n;   // giá mua n ngọc (gói 5 viên rẻ hơn)
 ITEMS.ngoc_ch={name:'Ngọc Cường Hoá',icon:'gem_enh'}; ITEMS.ngoc_ch_ht={name:'Ngọc Cường Hoá Huyền Thoại',icon:'gem_enh_ht'};

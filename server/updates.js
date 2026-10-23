@@ -4,6 +4,12 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-24za',title:'24/10 · Cường hoá Vuốt Thần Kim Quy · Mèn Mén giảm sức mạnh · Blacknut trốn góc',items:[
+    '🐢 Cường hoá được Vuốt Thần Kim Quy (khắc như đồ ở Phù Thuỷ, tối đa +12): mỗi cấp lan +3%, đánh xa +0,15 ô, vòng bắn lan rộng hơn, gọi Rồng Thần +0,1%, rồng cắn mạnh thêm 25%. Vuốt +12: lan 86%, xa thêm gần 3–4 ô',
+    '⚔ Vuốt giờ lan cả khi đánh bằng chiêu 1 mục tiêu (trước chỉ đòn đánh thường)',
+    '🐸 Mèn Mén giảm 40% sức mạnh: chỉ số ×0,9 (vẫn thêm 2% mỗi cấp của chủ), công ở MU theo công của chủ ×0,9',
+    '🐱 Blacknut trốn ở các góc khuất trong nơi làm việc, xa cửa vào, và chỉ ở 6 giây mỗi lần',
+    '🏆 Bảng xếp hạng không còn tên Kaixa (chủ game giữ ví ngân khố nhà nước)']},
   {v:'2026-10-24z',title:'24/10 · Chợ đồ cũ định giá theo độ hiếm · Vuốt Thần Kim Quy · Đổi Trái Ác Quỷ',items:[
     '💰 Chợ đồ cũ có tab Đăng bán: chọn món trong túi, có 3 mức giá gợi ý (Bán nhanh / Đề xuất / Giá cao), xem trước tiền nhận sau phí sàn. Đăng bán, gỡ món ở đâu cũng được, không cần về phòng',
     '⭐ Mỗi món có bậc hiếm (Thường, Khá, Hiếm, Sử thi, Huyền thoại) tính theo số người đang giữ, số đang bán trên chợ và giá vừa bán 7 ngày qua. Tab Mua có nhãn Rẻ / Đắt so với giá thị trường, xếp theo Hời nhất / Hiếm nhất',

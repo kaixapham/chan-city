@@ -41,7 +41,7 @@ function liveView(){ const t=now(); if(!LIVE) return null; return {md:LIVE.md,at
 const tacOf=k=>(coachOf(k)&&coachOf(k).tac)||'canbang';
 function stateView(pl){ const t=now(), md=mdNow(t), nx=LIVE&&LIVE.md===md?md+1:md+(t>=mdAt(md)?1:0), r=pl&&pl.prof?rec(pl.prof):null;
   return {season:ST.season,table:ranked().map(k=>[k,ST.table[k]]),live:liveView(),next:{md:nx,at:mdAt(nx),fx:fixtures(nx)},
-    scorers:Object.entries(ST.scorers).sort((a,b)=>b[1].g-a[1].g).slice(0,8).map(([,s])=>[s.n,s.c,s.g]),coaches:Object.fromEntries(IDS.map(k=>[k,coachOf(k)?{n:coachOf(k).n,tac:coachOf(k).tac}:null])),
+    scorers:Object.entries(ST.scorers).filter(([,s])=>!C.noRank({name:s.n})).sort((a,b)=>b[1].g-a[1].g).slice(0,8).map(([,s])=>[s.n,s.c,s.g]),coaches:Object.fromEntries(IDS.map(k=>[k,coachOf(k)?{n:coachOf(k).n,tac:coachOf(k).tac}:null])),
     stalls:Object.fromEntries(IDS.map(k=>[k,ST.stalls[k]&&ST.stalls[k].day===S.realTime().day?ST.stalls[k].n:''])),last:ST.last,
     me:r&&{fanq:fanView(pl.prof),club:r.club,role:r.role,sk:Math.round(r.sk*10)/10,apps:r.apps,goals:r.goals,fan:r.fan,stock:r.stock,paid:(pl.prof.daily.eplPaid||0),train:(pl.prof.daily.eplTrain||0),vend:(pl.prof.daily.eplVend||0),
       tix:LIVE?LIVE.fx.map(f=>f.tix[pl.uid]?f.tix[pl.uid].side:''):[]}}; }
@@ -99,7 +99,7 @@ function seasonEnd(){ const champ=ranked()[0], SE=E.season, c=CL[champ], lines=[
   for(const [uid,x] of Object.entries(ST.players)) if(x.c===champ&&x.apps>=3){ payPend(uid,SE.player,300,`🏆 ${c.name} vô địch Ngoại Hạng Anh tuần ${ST.season}! Thưởng cầu thủ`,1); lines.push(x.n); }
   const co=coachOf(champ); if(co) payPend(co.uid,SE.coach,500,`🏆 HLV vô địch Ngoại Hạng Anh cùng ${c.name}!`,1);
   for(const [uid,x] of Object.entries(ST.fans)) if(x.c===champ&&x.att>=SE.fanMin) payPend(uid,SE.fan,150,`🏆 ${c.name} vô địch! Thưởng cổ động viên đi xem ${x.att} trận`);
-  const top=Object.entries(ST.scorers).sort((a,b)=>b[1].g-a[1].g)[0]; if(top&&top[1].g>=SE.bootMin) payPend(top[0],SE.boot,300,`👟 Chiếc giày vàng tuần ${ST.season}: ${top[1].g} bàn`);
+  const top=Object.entries(ST.scorers).filter(([,s])=>!C.noRank({name:s.n})).sort((a,b)=>b[1].g-a[1].g)[0]; if(top&&top[1].g>=SE.bootMin) payPend(top[0],SE.boot,300,`👟 Chiếc giày vàng tuần ${ST.season}: ${top[1].g} bàn`);
   require('./world').sysChat(`🏆 ${c.name} vô địch Ngoại Hạng Anh tuần ${ST.season} (${ST.table[champ].pts} điểm)${lines.length?' · cầu thủ: '+lines.slice(0,5).join(', '):''}${top&&top[1].g>=SE.bootMin?` · Vua phá lưới ${top[1].n} ${top[1].g} bàn`:''}`);
   Object.assign(ST,{season:weekOf(),table:blankTable(),scorers:{},players:{},fans:{}}); save(); }
 hook('login',pl=>{ const L=ST.pend[pl.uid]; if(!L) return; delete ST.pend[pl.uid]; save(); setTimeout(()=>{ if(!pl.prof) return; for(const x of L){ reward(pl,{vnd:x.vnd,exp:x.exp},x.msg); if(x.champ) P.stat(pl,'eplChamp',1); } },3000); });
