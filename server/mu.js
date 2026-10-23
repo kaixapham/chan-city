@@ -33,7 +33,7 @@ const syncAcc=p=>{ if(p.look) p.look.acc={...(rec(p).acc||{})}; };   // để ng
 const syncWep=p=>{ if(!p.look) return; const r=rec(p), w=M.weapons[r.wep]; if(w&&w.store){ p.look.wep=r.wep; p.look.wl=(r.enh||{})[r.wep]||0; } else { delete p.look.wep; delete p.look.wl; } };
 const lgOf=p=>{ const k=p.look&&p.look.outfit&&p.look.outfit.top; return k&&M.legacy[k]?k:''; };
 function st(pl){ const r=rec(pl.prof); if(!r.cls) return null; const C0=M.cls[r.cls], ex=extraOf(pl.prof), s=S.muStats(r.cls,r.lv,r.fruit,r.wep,lgOf(pl.prof),ex); if(!pl.mus) pl.mus={hp:s.hp,mp:s.mp,cd:{},buff:{},dead:0};
-  const m=pl.mus; m.crit=Math.min(.75,.1+ex.crit); m.drain=Math.min(.5,ex.drain); m.shred=Math.min(C0.shred?.8:.6,ex.shred+(C0.shred||0)); m.tdmg=Math.min(1,ex.tdmg); m.cdr=Math.min(.4,ex.cdr); m.spell=Math.min(S.legendOwn(pl.prof,'airpod')?7:2,ex.spell); m.slowp=Math.min(C0.slowp?1:.6,ex.slowp+(C0.slowp||0)); m.chainp=Math.min(.6,ex.chainp); m.aura=Math.min(.3,ex.aura); m.armor=Math.min(C0.armorCap||.6,ex.armor+(C0.armor||0)+((m.buff.giap||0)>now()?.2:0)); m.gw=Math.min(.6,ex.gw+(C0.gw||0));   /* chỉ số phụ đồ MU + của class, có trần; Bật Giáp +20% giáp */
+  const m=pl.mus; m.crit=Math.min(.75,.1+ex.crit); m.drain=Math.min(.5,ex.drain); m.shred=Math.min(C0.shred?.8:.6,ex.shred+(C0.shred||0)); m.tdmg=Math.min(1,ex.tdmg); m.cdr=Math.min(.4,ex.cdr); m.spell=Math.min(S.legendOwn(pl.prof,'airpod')?7:2,ex.spell+(C0.spell||0)); m.slowp=Math.min(C0.slowp?1:.6,ex.slowp+(C0.slowp||0)); m.chainp=Math.min(.6,ex.chainp); m.aura=Math.min(.3,ex.aura); m.armor=Math.min(C0.armorCap||.6,ex.armor+(C0.armor||0)+((m.buff.giap||0)>now()?.2:0)); m.gw=Math.min(.6,ex.gw+(C0.gw||0));   /* chỉ số phụ đồ MU + của class, có trần; Bật Giáp +20% giáp */
    m.regen=(1+ex.regen)*(C0.regen||1);   /* đánh gần hồi máu nhanh hơn */ m.max=s.hp; m.mmax=s.mp; m.atk=s.atk; m.aspd=s.aspd; m.def=s.def*((m.buff.def||0)>now()?2:1); m.hp=Math.min(m.hp,m.max); m.mp=Math.min(m.mp,m.mmax);
   const OF=offOf(pl.prof); m.off=OF; m.pierce=(OF&&OF.pierce)||0; if(OF&&OF.rage&&(m.rageU||0)>now()){ const G=OF.rage; m.drain=Math.max(m.drain,G.drain); m.atk=Math.round(m.atk*(1+G.atk)); m.crit=Math.min(.75,m.crit+G.crit); }   /* Mặt Nạ Quỷ: đang khát máu */
   return m; }
@@ -162,7 +162,7 @@ const weakOf=(o,t)=>o&&o.weak&&o.weak.until>t?1-o.weak.mul:1;
 function splash(pl,sk,cx,cy,B0,X0,d,t){ const pts=[], dd=Math.max(1,Math.round(d*.6));
   for(const src of EXTRA) if(src.around) for(const o of src.around(cx,cy,sk.aoe,6,X0&&X0.id,pl.scene)){ o.hit(dd,pl,sk); debuff(null,o,sk,t); pts.push([o.x,o.y,dd]); }
   for(const b2 of [...LIVE.values()]) if(b2!==B0&&scOf(b2)===pl.scene&&Math.hypot(b2.x-cx,b2.y-cy)<=sk.aoe+radius(BS[b2.id],b2)){ const x=dmgBoss(b2,pl,dd,t); if(x>0){ debuff(b2,null,sk,t); pts.push([b2.x,b2.y,x]); } }
-  if(pts.length) bcast({t:'mufx',k:'psplash',from:pl.pid,x:cx,y:cy,r:sk.aoe,pts}); }
+  if(pts.length) bcast({t:'mufx',k:'psplash',from:pl.pid,x:cx,y:cy,r:sk.aoe,el:sk.el||'',pts}); }
 // Bật Giáp (Đại Tượng): phản lại boss / quái rừng một phần sát thương gốc vừa đánh vào mình (quái con của boss, lính D-Day, người thì không)
 function reflect(q,rd,fx){ if(rd<1||!fx) return; const t=now();
   if(fx.boss&&fx.ak!=='bm'){ const B=LIVE.get(fx.boss); if(!B||scOf(B)!==q.scene) return; const x=dmgBoss(B,q,rd,t); if(x>0){ bcast({t:'mufx',k:'refl',from:q.pid,to:'boss:'+B.id,boss:B.id,dmg:x}); if(LIVE.has(B.id)) pushBoss(); } return; }
@@ -519,9 +519,9 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     if(!B&&!X0){ const nb=[...LIVE.values()].filter(b=>scOf(b)===pl.scene&&!(b.diveU>t)).map(b=>[b,dist(pl,b.x,b.y)-radius(BS[b.id],b)]).filter(([,d])=>d<=R).sort((a,c)=>a[1]-c[1])[0], nx=nearestExtra(pl);
       if(nx&&nx.d-nx.rad<=R&&(!nb||nx.d-nx.rad<nb[1])) X0=nx; else if(nb) B=nb[0]; }
     if(!B&&!X0) return {};
-    krTick(pl,t); s.basicAt=t; const crit=Math.random()<s.crit, raw=s.atk*M.basic.mul*(.9+Math.random()*.2), def=B?BS[B.id].def:X0.def, d=Math.max(1,Math.round((raw-def*.5*(1-s.shred))*(crit?1.5:1)+s.atk*s.tdmg*.5));
+    krTick(pl,t); s.basicAt=t; const crit=Math.random()<s.crit, raw=s.atk*M.basic.mul*(.9+Math.random()*.2)*(M.cls[r.cls].magic?1+s.spell:1), def=B?BS[B.id].def:X0.def, d=Math.max(1,Math.round((raw-def*.5*(1-s.shred))*(crit?1.5:1)+s.atk*s.tdmg*.5));
     let to, miss=0; if(B){ const dd=dmgBoss(B,pl,d,t,'basic'); miss=missOf(dd); to='boss:'+B.id; } else to=X0.hit(d,pl,{k:'basic'});
-    if(s.drain) s.hp=Math.min(s.max,s.hp+Math.round(d*s.drain*(1-gwOf(s,t)))); if(!miss){ procs(pl,s,B,X0,d,t); if(KQ) kqHit(pl,KQ,R,B,X0,d,t); } W.setAct(pl,'attack',.25);
+    if(s.drain) s.hp=Math.min(s.max,s.hp+Math.round(d*s.drain*(1-gwOf(s,t)))); if(!miss){ procs(pl,s,B,X0,d,t); if(KQ) kqHit(pl,KQ,R,B,X0,d,t); const MG=M.cls[r.cls].magic; if(MG) splash(pl,{aoe:MG.r,el:'arcane'},B?B.x:X0.x,B?B.y:X0.y,B,X0,d*MG.k/.6,t); } W.setAct(pl,'attack',.25);
     if(!miss&&s.off&&s.off.dbl&&Math.random()<s.off.dbl){ if(B){ if(dmgBoss(B,pl,d,t,'basic')>0) procs(pl,s,B,X0,d,t); } else X0.hit(d,pl,{k:'basic'}); bcast({t:'mufx',k:'dbl',from:pl.pid,to,dmg:d}); }   /* Động cơ Musk: đánh liền 2 đòn */
     const wv=M.weapons[r.wep]; bcast({t:'mufx',k:M.skills[r.cls][0].k,basic:1,from:pl.pid,to,dmg:miss?0:d,miss,crit,w:wv&&wv.store?r.wep:'',wl:(r.enh||{})[r.wep]||0}); return {ok:1,to,next:gap}; }   /* hiệu ứng = chiêu 1 của class */
   if(op==='pen'){ const I=S.LEGEND.items.but; if(!S.legendOwn(p,'but')) return {err:`Chưa ghép đủ ${S.LEGEND.need} mảnh ${I.name}`}; if(s.dead>t) return {err:'Đang gục'}; const lg=p.legend; if((lg.butAt||0)>t) return {err:`Bút đang hồi, ${Math.ceil((lg.butAt-t)/1000)} giây nữa`};   /* Cây Bút của Redtype */

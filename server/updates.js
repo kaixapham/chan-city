@@ -4,6 +4,12 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-24zb',title:'24/10 · Phù Thuỷ Bóng Tối mạnh hơn, phép nổ lan',items:[
+    '🔮 Phù Thuỷ Bóng Tối: máu 95 → 230, thủ 6 → 12, công 25 → 30, mana 130 → 170, sẵn +25% sức mạnh phép',
+    '✨ Đánh thường là cầu phép bay xa 7 ô (trước 2,3 ô), tính cả sức mạnh phép, nổ lan 2,2 ô',
+    '☄ 3 chiêu mạnh hơn và đều nổ lan: Hoả Chưởng ×1,5 lan 1,8 ô · Lôi Chưởng ×2,9 lan 2,6 ô, choáng 0,5 giây · Mưa Thiên Thạch ×4,6 lan 4 ô, làm chậm',
+    '🪄 Niệm phép có vòng phép xoay dưới chân, cầu sáng tụ ở đầu gậy, hạt sáng bay lên; vụ nổ đổi màu theo hệ (lửa, sét, tím)',
+    '📿 Đồ phép mạnh hơn: mọi Sức mạnh phép trên vũ khí, set legacy, phụ kiện ×1,5; gậy phép thêm 25% công']},
   {v:'2026-10-24za',title:'24/10 · Cường hoá Vuốt Thần Kim Quy · Mèn Mén giảm sức mạnh · Blacknut trốn góc',items:[
     '🐢 Cường hoá được Vuốt Thần Kim Quy (khắc như đồ ở Phù Thuỷ, tối đa +12): mỗi cấp lan +3%, đánh xa +0,15 ô, vòng bắn lan rộng hơn, gọi Rồng Thần +0,1%, rồng cắn mạnh thêm 25%. Vuốt +12: lan 86%, xa thêm gần 3–4 ô',
     '⚔ Vuốt giờ lan cả khi đánh bằng chiêu 1 mục tiêu (trước chỉ đòn đánh thường)',

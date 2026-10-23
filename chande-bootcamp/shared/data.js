@@ -2717,6 +2717,12 @@ SHOPEE.flash=(ms=Date.now())=>{ const slot=Math.floor(ms/(SHOPEE.flashH*3600e3))
 SHOPEE.base=(k,ms)=>{ const c=SHOPEE.item(k); if(!c) return 0; return SHOPEE.flash(ms).ids.includes(k)?Math.round(c.price*(1-SHOPEE.flashOff)/1000)*1000:c.price; };   /* giá sau flash sale, trước ưu đãi */
 // thú cưng bán trên Shopee: tiền tố pet:
 { const ids0=SHOPEE.ids, item0=SHOPEE.item; SHOPEE.ids=()=>ids0().concat(Object.keys(PETS).map(k=>'pet:'+k)); SHOPEE.item=k=>String(k).startsWith('pet:')?PETS[String(k).slice(4)]:item0(k); }
+/* Phù Thuỷ Bóng Tối mạnh hơn (24/10, chủ game yêu cầu): máu 95 → 230, thủ 6 → 12, công 25 → 30, mana 130 → 170, đánh thường xa 7 ô và là cầu phép (tính sức mạnh phép, nổ lan 2,2 ô 45% sát thương),
+   sẵn +25% sức mạnh phép; 3 chiêu mạnh hơn và đều lan: Hoả Chưởng 1,8 ô, Lôi Chưởng 2,6 ô (choáng 0,5 giây), Mưa Thiên Thạch 4 ô (làm chậm). Đồ phép: mọi Sức mạnh phép trên đồ ×1,5, gậy phép thêm 25% công */
+Object.assign(MU.cls.dw,{hp:230,mp:170,atk:30,def:12,regen:1.4,reach:7,armor:.05,spell:.25,magic:{r:2.2,k:.45},desc:'Giáp xanh, gậy phép, niệm phép từ xa: cầu phép, chưởng lửa, chưởng sét, mưa thiên thạch đều nổ lan rộng. Sát thương phép to nhất, sức mạnh phép sẵn +25%.'});
+{ const [h,l,m]=MU.skills.dw; Object.assign(h,{mul:1.5,aoe:1.8,el:'fire'}); Object.assign(l,{mul:2.9,aoe:2.6,el:'elec',stun:.5}); Object.assign(m,{mul:4.6,aoe:4,el:'fire',slow:2}); }
+{ const seen=new Set(); for(const src of [MU.weapons,MU.legacy,MU.acc]) for(const x of Object.values(src)){ const b=x.bonus; if(b&&b.spell&&!seen.has(b)){ seen.add(b); b.spell=+(b.spell*1.5).toFixed(3); } }   /* seen: vũ khí cùng loại có thể dùng chung 1 object bonus */
+  for(const w of Object.values(MU.weapons)) if(w.type==='staff') w.atk=+(w.atk*1.25).toFixed(3); }
 /* giảm máu mọi boss 40% (24/10, chủ game yêu cầu), trừ Pepe: mọi boss MU (cả 5 anh em Siêu Nhân, Megazord, Đỉnh Bắc), MCK ở Ké, Megatron. Máu đổi dạng (hpMul) vẫn tính theo máu mới */
 { const K=.6; for(const [k,b] of Object.entries(MU.bosses)) if(k!=='pepe'){ b.hp=Math.round(b.hp*K); b.perPlayer=Math.round((b.perPlayer||0)*K); }
   MU.boss.hp=MU.bosses.luffy.hp; MU.boss.perPlayer=MU.bosses.luffy.perPlayer; MCK.hp=Math.round(MCK.hp*K); MCK.hpPer=Math.round(MCK.hpPer*K); MEGATRON.hp=Math.round(MEGATRON.hp*K); }
