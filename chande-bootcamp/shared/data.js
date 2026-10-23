@@ -2723,6 +2723,9 @@ Object.assign(MU.cls.dw,{hp:230,mp:170,atk:30,def:12,regen:1.4,reach:7,armor:.05
 { const [h,l,m]=MU.skills.dw; Object.assign(h,{mul:1.5,aoe:1.8,el:'fire'}); Object.assign(l,{mul:2.9,aoe:2.6,el:'elec',stun:.5}); Object.assign(m,{mul:4.6,aoe:4,el:'fire',slow:2}); }
 { const seen=new Set(); for(const src of [MU.weapons,MU.legacy,MU.acc]) for(const x of Object.values(src)){ const b=x.bonus; if(b&&b.spell&&!seen.has(b)){ seen.add(b); b.spell=+(b.spell*1.5).toFixed(3); } }   /* seen: vũ khí cùng loại có thể dùng chung 1 object bonus */
   for(const w of Object.values(MU.weapons)) if(w.type==='staff') w.atk=+(w.atk*1.25).toFixed(3); }
+/* Tiên Nữ (hệ cung) yếu đi (25/10, chủ game yêu cầu): buff chạy nhanh giảm 50% (×2 → ×1,5), tầm bắn đánh thường + 3 chiêu giảm 30%, giáp giảm 70%, máu giảm 50% */
+{ const E=MU.cls.elf; E.move=1+(E.move-1)*.5; E.reach=+(E.reach*.7).toFixed(2); E.armor=+(E.armor*.3).toFixed(3); E.hp=Math.round(E.hp*.5); for(const s of MU.skills.elf) if(s.range) s.range=+(s.range*.7).toFixed(2);
+  E.desc=E.desc.replace('tầm xa gấp đôi','tầm xa').replace('chạy nhanh gấp 2','chạy nhanh ×1,5'); }
 /* giảm máu mọi boss 40% (24/10, chủ game yêu cầu), trừ Pepe: mọi boss MU (cả 5 anh em Siêu Nhân, Megazord, Đỉnh Bắc), MCK ở Ké, Megatron. Máu đổi dạng (hpMul) vẫn tính theo máu mới */
 { const K=.6; for(const [k,b] of Object.entries(MU.bosses)) if(k!=='pepe'){ b.hp=Math.round(b.hp*K); b.perPlayer=Math.round((b.perPlayer||0)*K); }
   MU.boss.hp=MU.bosses.luffy.hp; MU.boss.perPlayer=MU.bosses.luffy.perPlayer; MCK.hp=Math.round(MCK.hp*K); MCK.hpPer=Math.round(MCK.hpPer*K); MEGATRON.hp=Math.round(MEGATRON.hp*K); }
