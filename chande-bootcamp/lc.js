@@ -86,7 +86,7 @@ const how=(from,to)=>{ const s=SP[from]; if(s.evo&&s.evo.to===to) return `Lv${s.
 function deckCard(k){ const s=SP[k], d=(lc().dex||{})[k], wh=[...(WHERE[k]||[])];
   return `<div class="pdk ${d===2?'got':d?'seen':''} ${s.legend?'leg':''} ${s.rare?'rare':''}"><i class="pdst">${d===2?'✔ đã bắt':d?'👁 đã gặp':'chưa gặp'}</i>${img(k,64)}<b>${s.legend?'★ ':s.rare?'✦ ':''}${esc(s.name)}</b>
     <span>${chips(k)} <small>${STAGE[s.st]||''}${s.night?' · 🌙 chỉ ban đêm':''}${s.water?' · 🌊 dưới nước':''}${s.sl?` · thần thú ×${s.sl}`:''}</small></span>${sbars(s.b)}
-    <p>${esc(s.desc||'')}</p><small class="pdw">📍 ${wh.length?wh.map(esc).join(' · '):'Chỉ có khi tiến hoá'}</small></div>`; }
+    <p>${esc(s.desc||'')}</p>${s.fx?`<ul class="legfx">${s.fx.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<small class="pdw">📍 ${wh.length?wh.map(esc).join(' · '):'Chỉ có khi tiến hoá'}</small></div>`; }
 // dạng Huyền Thoại Lv50: thẻ riêng sau bậc cuối (loài còn tiến hoá thì tới Lv50 đã là dạng sau) · hình to hơn, ánh hologram, vòng aura, chỉ số ×1,2 + chỉ số phụ lối tướng Dota
 const ascTxt=(k,v)=>k==='bkb'?`${SD.LC_ASC.names[k]} mỗi ${v} giây`:`${SD.LC_ASC.names[k]} +${Math.round(v*1000)/10}%`;
 function ascCard(k){ const s=SP[k], a=SD.lcAsc(k); if(!a||s.evo) return ''; const pet=SD.LC_ASC.pet, P0=Object.keys(a.v).filter(x=>pet.includes(x)), O=Object.keys(a.v).filter(x=>!pet.includes(x));
@@ -306,4 +306,32 @@ function draw(g,now){ g.imageSmoothingEnabled=false; g.drawImage(bg(),0,0); cons
   hpBox(g,s.foe,8,8,false); hpBox(g,s.me,184,96,true);
   if(BT.v.kind==='gym'||BT.v.kind==='spar'){ const n=BT.v.left; for(let i=0;i<n;i++){ const b=A.lcBall(0); g.drawImage(b.c,8+i*12,34,12,12); } }
   if(BT.flash>0){ g.fillStyle=`rgba(255,255,255,${BT.flash})`; g.fillRect(0,0,320,150); BT.flash=Math.max(0,BT.flash-.05); } }
+/* ---------- thanh trên cùng: Mèn Mén (rừng Ké, mỗi lượt 12 phút có thể ra) và Blacknut (ghé 1 nơi làm việc 10 giây mỗi 40 giây) đang ở đâu, còn bao lâu, lượt tới; bấm xem tác dụng + Grab tới.
+   lịch con huyền thoại tính từ thời gian (data.js lcWild) nên client tự tính, không cần hỏi server ---------- */
+const BNL=L.bn, scName=s=>((SD.DEST[s]&&SD.DEST[s].name)||(s==='retreat'?'Ké Retreat':s)).split(' (')[0];
+const SHORT={lumen:'Lumen',bearplus:'Bearplus',everfit:'Everfit',vnpt:'VNPT',nghienmotion:'Nghiện Motion',lavi:'Lavi',yenlang:'Yên Lãng',das:'DAS'}, shortName=s=>SHORT[s]||scName(s);   /* tên ngắn cho thanh trên cùng */
+let menNx={per:-1,at:0}, legOpen=false;
+const bnAt=ms=>{ for(const sc of Object.keys(BNL.maps)){ const w=SD.lcWild(ms,sc).find(x=>x.bn); if(w) return {...w,sc}; } return null; };
+function legNow(){ const t=NET.now(), per=Math.floor(t/L.period), gone=lc().gone||{}, c=Math.floor(t/BNL.cycle);
+  if(menNx.per!==per){ menNx={per,at:0}; for(let p=per+1;p<=per+240;p++) if(SD.lcWild(p*L.period+1,'retreat').some(w=>w.men)){ menNx.at=p*L.period; break; } }   /* lượt tới Mèn Mén ra: tính lại mỗi lượt 12 phút */
+  const men=SD.lcWild(t,'retreat').find(w=>w.men), bn=bnAt(t), next=[]; for(let i=1;i<=4;i++){ const w=bnAt((c+i)*BNL.cycle+1); if(w) next.push({...w,at:(c+i)*BNL.cycle}); }
+  return {t,men,menGot:!!(men&&gone[men.key]),menEnd:(per+1)*L.period,menNext:menNx.at,bn,bnGot:!!(bn&&gone[bn.key]),next}; }
+const left=ms=>{ const s=Math.max(0,Math.ceil(ms/1000)); return s<60?s+'s':s<3600?`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`:`${Math.floor(s/3600)}h${String(Math.floor(s%3600/60)).padStart(2,'0')}`; };
+const clock=ms=>{ const v=SD.vnTime(ms); return `${String(v.h).padStart(2,'0')}:${String(v.m).padStart(2,'0')}`; };
+function legBar(){ const b=$('#hudLeg'), tx=$('#hudLegT'); if(!b||!tx) return; const on=!!(GAME.S&&G()&&G().look); b.hidden=!on; if(!on) return; const v=legNow();
+  const m=v.men&&!v.menGot?`<b class="lgm">Mèn Mén</b> Ké ${left(v.menEnd-v.t)}`:`<span class="muted">Mèn Mén</span> ${v.menNext?clock(v.menNext):'?'}`;
+  const n=v.bn&&!v.bnGot?`<b class="lgb">Blacknut</b> ${esc(shortName(v.bn.sc))} ${left(v.bn.until-v.t)}`:v.next[0]?`<span class="muted">Blacknut</span> → ${esc(shortName(v.next[0].sc))} ${left(v.next[0].at-v.t)}`:'';
+  b.classList.toggle('hot',!!((v.men&&!v.menGot)||(v.bn&&!v.bnGot))); tx.innerHTML=`★ ${m} <i class="lgsep">|</i> ${n}`;
+  if(legOpen){ if(document.querySelector('#panel:not([hidden]) .legp')) UI.refresh(); else legOpen=false; } }
+setInterval(legBar,1000);
+setTimeout(()=>{ const b=$('#hudLeg'); if(b) b.addEventListener('click',e=>{ e.currentTarget.blur(); if(GAME.S) UI.lcLegends(); }); },0);
+const fxList=sp=>`<ul class="legfx">${(SP[sp].fx||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`;
+UI.lcLegends=()=>{ legOpen=true; UI.open('Lính Cát Huyền Thoại xuất hiện',()=>{ const v=legNow(), go=(w,sc,lbl)=>btn('leggo',lbl,{sc,x:w.x,y:w.y,n:SP[w.sp].name},'pri');
+  const menTxt=v.men?(v.menGot?'<p class="muted">Bạn đã gặp Mèn Mén lượt này rồi.</p>':`<p>Đang lang thang ở <b>rừng Ké Retreat</b>, còn <b>${left(v.menEnd-v.t)}</b>.</p>${go(v.men,'retreat','Grab tới chỗ Mèn Mén')}`)
+    :`<p>Chưa xuất hiện. Lượt tới: <b>${v.menNext?clock(v.menNext):'?'}</b>${v.menNext?` (sau ${left(v.menNext-v.t)})`:''}, ở rừng Ké, mỗi lượt ${L.period/60e3} phút.</p>`;
+  const bnTxt=(v.bn&&!v.bnGot?`<p>Đang ở <b>${esc(scName(v.bn.sc))}</b>, còn <b>${left(v.bn.until-v.t)}</b>.</p>${go(v.bn,v.bn.sc,'Grab tới chỗ Blacknut')}`:'<p class="muted">Lúc này không ở đâu cả (đang chuyển chỗ).</p>')
+    +`<h5>Sắp ghé</h5><div class="legnx">${v.next.map(w=>`<span>${esc(scName(w.sc))}</span><span class="muted">sau ${left(w.at-v.t)}</span>${go(w,w.sc,'Tới trước')}`).join('')}</div>
+    <p class="muted">Bóng Huyền Thoại trong túi: <b>${cnt(BNL.ball)}</b> (mua ở Trung tâm Lính Cát ${fmt(L.shop[BNL.ball])}). Grab đi mất vài giây nên tới trước chỗ sắp ghé là chắc nhất.</p>`;
+  return `<div class="legp"><div class="legc"><h5>★ Mèn Mén</h5>${fxList(L.men.sp)}${menTxt}</div><div class="legc"><h5>★ Blacknut</h5>${fxList(BNL.sp)}${bnTxt}</div></div>`; },{wide:true}); };
+UI.onAct('leggo',d=>{ UI.closeAll(); legOpen=false; GAME.autoGo(d.sc,()=>GAME.walkTo(+d.x,+d.y,d.n)); });
 })();

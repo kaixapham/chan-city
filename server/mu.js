@@ -15,10 +15,11 @@ const MS=new Set(['mu','muw']), EXTRA_SCENES=new Set(), inMu=pl=>(MS.has(pl.scen
 const pasTotal=lv=>Math.floor((lv-1)/3), pasUsed=r=>Object.values(r.pas||{}).reduce((a,v)=>a+v,0), pasPts=r=>Math.max(0,pasTotal(r.lv)-pasUsed(r));
 C.hook('login',pl=>{ const r=pl.prof&&pl.prof.mu; if(!r||!r.pas||pasUsed(r)<=pasTotal(r.lv)) return; r.pas={}; markDirty(pl); setTimeout(()=>{ if(pl.prof) note(pl,`⭐ Điểm nội tại tính lại: cứ 3 cấp MU được 1 điểm. Đã hoàn lại hết, bấm ⭐ Nội tại cộng lại ${pasTotal(r.lv)} điểm nhé`,'quest'); },3600); });
 function extraOf(p){ const r=rec(p), o={hp:0,mp:0,atk:0,def:0,armor:0,gw:0,regen:0,crit:0,drain:0,aspd:0,slowp:0,chainp:0,aura:0,shred:0,tdmg:0,cdr:0,spell:0};
-  { const lg=lgOf(p), LB=lg&&M.legacy[lg].bonus; if(LB) for(const [s,v] of Object.entries(LB)) if(!['hp','mp','atk','def'].includes(s)) o[s]+=v; }   /* chỉ số phụ của set legacy (máu / mana / công / thủ đã tính trong muStats) */
-  for(const k of Object.values(r.acc||{})){ const a=M.acc[k]; if(a) for(const [s,v] of Object.entries(a.bonus)) o[s]+=v; }
+  const mul=k=>S.enhMul((r.enh||{})[k]||0);   /* cường hoá còn tăng chỉ số chính của món: mỗi cấp +5% (data.js ENH.main) */
+  { const lg=lgOf(p), LB=lg&&M.legacy[lg].bonus, km=lg?mul(M.legacy[lg].base||lg):1; if(LB) for(const [s,v] of Object.entries(LB)) o[s]+=['hp','mp','atk','def'].includes(s)?v*(km-1):v*km; }   /* set legacy: máu / mana / công / thủ gốc đã tính trong muStats, ở đây chỉ cộng phần cường hoá */
+  for(const k of Object.values(r.acc||{})){ const a=M.acc[k], km=mul(k); if(a) for(const [s,v] of Object.entries(a.bonus)) o[s]+=v*km; }
   for(const pp of [r.pas||{},r.pasB||{}]) for(const [k,n] of Object.entries(pp)){ const P=M.passive[k]; if(P) o[P.stat]+=P.per*n; }   /* điểm nội tại + cấp đọc sách */
-  const w=M.weapons[r.wep]; if(w&&w.bonus) for(const [s,v] of Object.entries(w.bonus)) o[s]+=v;   /* chỉ số phụ của vũ khí Thợ Rèn */
+  const w=M.weapons[r.wep]; if(w){ const km=mul(r.wep); if(w.bonus) for(const [s,v] of Object.entries(w.bonus)) o[s]+=v*km; if(w.atk) o.atk+=w.atk*(km-1); }   /* chỉ số phụ của vũ khí Thợ Rèn, công gốc (w.atk) tính trong muStats + phần cường hoá */
   const my=S.mythOf(p.look&&p.look.mount,p); if(my&&p.horse&&p.horse.own) for(const [s,v] of Object.entries(my.bonus)) o[s]+=v;   /* thần thú đang chọn */
   if(S.legendOwn(p,'pod')){ o.hp+=1.5; o.mp+=1.5; o.atk+=1.5; o.def+=1.5; }   /* Cái Pod của Kaixa: +150% mọi chỉ số */
   if(S.legendOwn(p,'airpod')) o.spell+=S.LEGEND.items.airpod.spell;   /* Airpod của VNPT: sức mạnh chiêu +500% */
@@ -45,7 +46,21 @@ const offOf=p=>{ const k=rec(p).acc&&rec(p).acc.shield; return (k&&M.acc[k])||nu
 const skillsOf=(r,p)=>{ const L=[...(M.skills[r.cls]||[])]; L[3]=r.fruit&&F[r.fruit]?F[r.fruit].skill:null; const lg=p&&lgOf(p); L[4]=lg?M.legacy[lg].skill:null; return L; };
 function view(pl){ const r=rec(pl.prof), m=st(pl); if(!m) return {cls:''}; const t=now();
   return {cls:r.cls,lv:r.lv,exp:r.exp,next:M.lvExp(r.lv),aspd:m.aspd,fx:fxOf(m,t),sub:{regen:+(M.regen.hp*(m.regen||1)).toFixed(4),gw:m.gw,armor:m.armor,crit:m.crit,drain:m.drain,shred:m.shred,tdmg:m.tdmg,cdr:m.cdr,spell:m.spell,slowp:m.slowp,chainp:m.chainp,aura:m.aura},hp:Math.round(m.hp),max:m.max,mp:Math.round(m.mp),mmax:m.mmax,cd:Object.fromEntries(Object.entries(m.cd).map(([k,v])=>[k,Math.max(0,v-t)])),
-    buff:(m.buff.def||0)>t?m.buff.def-t:0,dead:m.dead>t?m.dead-t:0,duel:pl.muDuel?pl.muDuel.other:0,w:r.w,l:r.l,fruit:r.fruit||'',wep:r.wep||'',lg:lgOf(pl.prof),enh:r.enh||{},acc:r.acc||{},accOwned:r.accOwned||{},pas:r.pas||{},pasB:r.pasB||{},sp:pasPts(r),crit:m.crit,cp:powerOf(pl.prof),atk:m.atk,def:m.def}; }   /* lực chiến tính 1 kiểu với bảng xếp hạng (powerOf) */
+    buff:(m.buff.def||0)>t?m.buff.def-t:0,dead:m.dead>t?m.dead-t:0,duel:pl.muDuel?pl.muDuel.other:0,w:r.w,l:r.l,fruit:r.fruit||'',wep:r.wep||'',lg:lgOf(pl.prof),enh:r.enh||{},kq:r.kq||{},kqs:kqNow(pl),acc:r.acc||{},accOwned:r.accOwned||{},pas:r.pas||{},pasB:r.pasB||{},sp:pasPts(r),crit:m.crit,cp:powerOf(pl.prof),atk:m.atk,def:m.def}; }   /* lực chiến tính 1 kiểu với bảng xếp hạng (powerOf) */
+// Vuốt Thần Kim Quy (data.js ENH.kq): đếm món có vuốt đang dùng (vũ khí, set đang mặc / giáp class, phụ kiện đang đeo)
+const kqN=(p,r)=>{ const K=r.kq; if(!K) return 0; return [r.wep,lgOf(p)||(r.cls?M.cls[r.cls].set:''),...Object.values(r.acc||{})].filter(k=>k&&K[k]).length; };
+const kqNow=pl=>{ const r=rec(pl.prof); return S.kqOf(r.cls,kqN(pl.prof,r)); };
+// đánh thường trúng: lan sang quái / boss quanh (bắn lan quanh mục tiêu, chém lan quanh mình), có tỉ lệ gọi Rồng Thần cắn % máu tối đa mục tiêu + quái quanh
+function kqHit(pl,KQ,R,B,X0,d,t){ const sc=pl.scene, tx=B?B.x:X0.x, ty=B?B.y:X0.y, ban=KQ.sty==='ban', cx=ban?tx:pl.x/T, cy=ban?ty:pl.y/T, rr=ban?KQ.r:R, skip=X0&&X0.id;
+  const dd=Math.max(1,Math.round(d*KQ.splash)), hit=[];
+  for(const src of EXTRA) if(src.around) for(const o of src.around(cx,cy,rr,S.ENH.kq.n,skip,sc)){ o.hit(dd,pl,{}); hit.push([o.x,o.y,dd]); }
+  for(const b2 of [...LIVE.values()]) if(b2!==B&&scOf(b2)===sc&&Math.hypot(b2.x-cx,b2.y-cy)<=rr+radius(BS[b2.id],b2)){ const x2=dmgBoss(b2,pl,dd,t); if(x2>0) hit.push([b2.x,b2.y,x2]); }
+  if(hit.length) bcast({t:'mufx',k:'kqlan',from:pl.pid,sty:KQ.sty,x:cx,y:cy,r:rr,pts:hit});
+  if(Math.random()>=KQ.chance) return; const D=S.ENH.kq.dragon, pts=[], one=mx=>Math.max(1,Math.round((mx||0)*D.pct));
+  if(B){ const x=dmgBoss(B,pl,one(B.max),t,'kq'); if(x>0) pts.push([B.x,B.y,x]); } else { const v=one(X0.max); X0.hit(v,pl,{}); pts.push([X0.x,X0.y,v]); }
+  for(const src of EXTRA) if(src.around) for(const o of src.around(tx,ty,D.r,D.n,skip,sc)){ const v=one(o.max); o.hit(v,pl,{}); pts.push([o.x,o.y,v]); }
+  for(const b2 of [...LIVE.values()]) if(b2!==B&&scOf(b2)===sc&&Math.hypot(b2.x-tx,b2.y-ty)<=D.r+radius(BS[b2.id],b2)){ const x=dmgBoss(b2,pl,one(b2.max),t,'kq'); if(x>0) pts.push([b2.x,b2.y,x]); }
+  bcast({t:'mufx',k:'kqlong',from:pl.pid,x:tx,y:ty,pts}); }
 const push=pl=>send(pl,{t:'mume',v:view(pl)});
 const inScene=()=>{ const out=[...C.sceneOf('mu'),...C.sceneOf('muw')]; for(const id of EXTRA_SCENES) out.push(...C.sceneOf(id)); return out; };
 const bcast=obj=>{ for(const q of inScene()) send(q,obj); };
@@ -439,11 +454,20 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     const top=k||(r.cls?M.cls[r.cls].set:''); if(!top) return {err:'Chọn class ở Vệ binh trước'}; if(p.look&&p.look.outfit) p.look.outfit.top=top; if(pl.mus) st(pl); markDirty(pl); C.refreshInfo(pl); push(pl);
     return {msg:op==='buy'?`Đã mua và mặc Set Legacy ${L.name}! Lực chiến tăng, đòn đánh có hiệu ứng riêng`:k?`Đã mặc ${L.name}`:'Đã mặc lại giáp class',look:p.look}; }
   // Phù Thuỷ Cường Hoá: khắc lỗ cường hoá cho 1 món đồ (1 ngọc + phí; legend = dùng Ngọc Huyền Thoại 80%), mua ngọc, nhận quà Lính Cát huyền thoại
-  if(op==='enh'||op==='enhbuy'||op==='enhgift'){ if(!P.nearNpc(pl,'mu_enchant')) return {err:'Gặp Phù Thuỷ Cường Hoá ở quảng trường'}; const E=S.ENH;
+  if(op==='enh'||op==='enhbuy'||op==='enhgift'||op==='enhwash'||op==='kqset'){ if(!P.nearNpc(pl,'mu_enchant')) return {err:'Gặp Phù Thuỷ Cường Hoá ở quảng trường'}; const E=S.ENH;
     if(op==='enhbuy'){ const n=Math.max(1,Math.min(20,m.n|0)), cost=S.gemCost(n); if(!shopPay(pl,cost)) return {err:`${n} ngọc giá ${fmt(cost)}`}; addItem(pl,'ngoc_ch',n); markDirty(pl); return {msg:`Mua ${n} Ngọc Cường Hoá`}; }
     if(op==='enhgift'){ const lc=p.lc||{}, got=p.flags.enhGift=p.flags.enhGift||{}, sp=[...new Set([...(lc.party||[]),...(lc.box||[])].map(x=>x.sp).filter(s=>S.LC_SPECIES[s]&&S.LC_SPECIES[s].legend&&!got[s]))];
       if(!sp.length) return {err:'Chưa có Lính Cát huyền thoại mới (mỗi loài huyền thoại tặng 1 viên)'}; for(const s of sp) got[s]=1; addItem(pl,'ngoc_ch_ht',sp.length); markDirty(pl);
       return {msg:`${sp.map(s=>S.LC_SPECIES[s].name).join(', ')} tặng bạn ${sp.length} Ngọc Cường Hoá Huyền Thoại (80% thành công)!`}; }
+    // tẩy tuỷ món +12 thành Vuốt Thần Kim Quy / gắn vuốt vào món +12 khác
+    if(op==='enhwash'||op==='kqset'){ const k=String(m.k||''), kind=S.enhKind(k), K=E.kq; if(!kind) return {err:'Món này không cường hoá được'};
+      const own=kind==='weapon'?C.has(pl,k):kind==='set'?!!p.owned[k]:!!(r.accOwned||{})[k]; if(!own) return {err:'Bạn chưa có món này'};
+      const enh=r.enh=r.enh||{}, kq=r.kq=r.kq||{}, nm=(M.weapons[k]||M.legacy[k]||M.acc[k]||S.CLOTHES[k]||{}).name||k;
+      if((enh[k]||0)<E.max) return {err:`Cần cường hoá đủ +${E.max}`}; if(kq[k]) return {err:'Món này đã gắn Vuốt Thần Kim Quy'};
+      if(op==='enhwash'){ if(!take(pl,K.fee)) return {err:`Phí tẩy tuỷ ${fmt(K.fee)}`}; enh[k]=0; addItem(pl,K.item,1); }
+      else { if(!C.has(pl,K.item)) return {err:`Cần 1 Vuốt Thần Kim Quy: tẩy tuỷ 1 món +${E.max} khác`}; addItem(pl,K.item,-1); kq[k]=1; }
+      if(k===r.wep){ syncWep(p); C.refreshInfo(pl); } if(pl.mus) st(pl); markDirty(pl); push(pl);
+      return {ok:1,msg:op==='enhwash'?`Tẩy tuỷ ${nm}: ${E.max} lỗ cường hoá hoá thành 1 Vuốt Thần Kim Quy (món về +0)`:`Đã gắn Vuốt Thần Kim Quy vào ${nm} +${E.max}!`}; }
     const k=String(m.k||''), kind=S.enhKind(k); if(!kind) return {err:'Món này không cường hoá được'};
     const own=kind==='weapon'?C.has(pl,k):kind==='set'?!!p.owned[k]:!!(r.accOwned||{})[k]; if(!own) return {err:'Bạn chưa có món này'};
     const enh=r.enh=r.enh||{}, L=enh[k]||0; if(L>=E.max) return {err:`Đã khắc đủ ${E.max} lỗ`}; const gem=m.legend?'ngoc_ch_ht':'ngoc_ch'; if(!C.has(pl,gem)) return {err:`Cần ${S.ITEMS[gem].name}`};
@@ -468,6 +492,9 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
   // ăn Trái Ác Quỷ: mỗi người chỉ 1 trái, có chiêu thứ 4 (phím 4) + chỉ số cộng thêm
   if(op==='eat'){ const k=String(m.k||''), f=F[k]; if(!f||!C.has(pl,'taq_'+k)) return {err:'Không có trái này'}; if(r.fruit) return {err:`Bạn đã ăn ${F[r.fruit].name} rồi! Ăn thêm trái nữa là nổ tung người đấy`}; if(!r.cls) return {err:'Chọn class ở Vệ binh trước'};
     addItem(pl,'taq_'+k,-1); r.fruit=k; pl.mus=null; st(pl); markDirty(pl); push(pl); bcast({t:'mufx',k:'eat',to:pl.pid,fruit:k}); return {msg:`Ăn ${f.name}! Năng lực mới: phím 4 "${f.skill.name}". ${f.desc}`}; }
+  // xoá Trái Ác Quỷ đang ăn khỏi người (mất phí, trái cũ mất luôn) để ăn trái khác
+  if(op==='unfruit'){ if(!r.fruit) return {err:'Bạn chưa ăn Trái Ác Quỷ nào'}; const old=F[r.fruit]; if(!take(pl,M.fruitWipe)) return {err:`Xoá trái tốn ${fmt(M.fruitWipe)}`};
+    r.fruit=''; pl.mus=null; st(pl); markDirty(pl); push(pl); return {msg:`Đã xoá ${old?old.name:'Trái Ác Quỷ'} khỏi cơ thể, mất chiêu phím 4. Giờ ăn được trái khác`}; }
   if(op==='wep'){ const k=String(m.k||''); if(k&&(!M.weapons[k]||!C.has(pl,k))) return {err:'Chưa có vũ khí này'}; r.wep=k||''; syncWep(p); C.refreshInfo(pl); pl.mus&&st(pl); markDirty(pl); push(pl); return {msg:k?`Cầm ${M.weapons[k].name}: ${M.weapons[k].desc}`:'Cất vũ khí'}; }
   if(op==='pick'){ const k=String(m.k||''), L=M.hidden[k], i=m.i|0, q=HID_Q[k]; if(!L||!L[i]) return {err:'?'}; if(p.quests[q]!=='active') return {err:'?'}; if(k==='lua_ma'&&!night()) return {err:'Đốm lửa ma chỉ hiện ban đêm'};
     const H=p.flags.muHid=p.flags.muHid||{}; if(H[k+i]) return {err:'Nhặt rồi'}; if(dist(pl,L[i][0],L[i][1])>2.2) return {err:'Lại gần hơn'}; H[k+i]=1; addItem(pl,k,1); markDirty(pl);
@@ -480,7 +507,7 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     for(const x of inScene()) note(x,`⚔ ${q.prof.name} và ${p.name} bắt đầu thách đấu!`,'quest'); return {ok:true}; }
   // đánh thường (client tự gửi khi đứng gần quái / boss): ưu tiên mục tiêu client chỉ (to = 'boss:id' / 'mob:id') nếu trong tầm, không thì con gần nhất; nhịp theo tốc đánh
   if(op==='basic'){ if(s.dead>t||pl.muDuel) return {}; if(stunned(s,t)) return {next:300}; const gap=1000/(s.aspd||1)*aslowOf(s,t); if(t-(s.basicAt||0)<gap*.85) return {next:gap-(t-(s.basicAt||0))};
-    const R=M.cls[r.cls].reach||M.basic.range, want=String(m.to||''); let B=null, X0=null;
+    const KQ=S.kqOf(r.cls,kqN(p,r)), R=(M.cls[r.cls].reach||M.basic.range)+(KQ?KQ.reach:0), want=String(m.to||''); let B=null, X0=null;   /* Vuốt Thần Kim Quy: đánh xa hơn */
     if(want.startsWith('boss:')){ const b=LIVE.get(want.slice(5)); if(b&&scOf(b)===pl.scene&&!(b.diveU>t)&&dist(pl,b.x,b.y)<=R+radius(BS[b.id],b)) B=b; }
     else if(want.includes(':')){ const [pk,pi]=want.split(':'); for(const src of EXTRA) if((src.kind||'mob')===pk){ const o=src.byId&&src.byId(+pi,pl); if(o&&o.d<=R+o.rad){ X0=o; break; } } }
     if(!B&&!X0){ const nb=[...LIVE.values()].filter(b=>scOf(b)===pl.scene&&!(b.diveU>t)).map(b=>[b,dist(pl,b.x,b.y)-radius(BS[b.id],b)]).filter(([,d])=>d<=R).sort((a,c)=>a[1]-c[1])[0], nx=nearestExtra(pl);
@@ -488,7 +515,7 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     if(!B&&!X0) return {};
     krTick(pl,t); s.basicAt=t; const crit=Math.random()<s.crit, raw=s.atk*M.basic.mul*(.9+Math.random()*.2), def=B?BS[B.id].def:X0.def, d=Math.max(1,Math.round((raw-def*.5*(1-s.shred))*(crit?1.5:1)+s.atk*s.tdmg*.5));
     let to, miss=0; if(B){ const dd=dmgBoss(B,pl,d,t,'basic'); miss=missOf(dd); to='boss:'+B.id; } else to=X0.hit(d,pl,{k:'basic'});
-    if(s.drain) s.hp=Math.min(s.max,s.hp+Math.round(d*s.drain*(1-gwOf(s,t)))); if(!miss) procs(pl,s,B,X0,d,t); W.setAct(pl,'attack',.25);
+    if(s.drain) s.hp=Math.min(s.max,s.hp+Math.round(d*s.drain*(1-gwOf(s,t)))); if(!miss){ procs(pl,s,B,X0,d,t); if(KQ) kqHit(pl,KQ,R,B,X0,d,t); } W.setAct(pl,'attack',.25);
     if(!miss&&s.off&&s.off.dbl&&Math.random()<s.off.dbl){ if(B){ if(dmgBoss(B,pl,d,t,'basic')>0) procs(pl,s,B,X0,d,t); } else X0.hit(d,pl,{k:'basic'}); bcast({t:'mufx',k:'dbl',from:pl.pid,to,dmg:d}); }   /* Động cơ Musk: đánh liền 2 đòn */
     const wv=M.weapons[r.wep]; bcast({t:'mufx',k:M.skills[r.cls][0].k,basic:1,from:pl.pid,to,dmg:miss?0:d,miss,crit,w:wv&&wv.store?r.wep:'',wl:(r.enh||{})[r.wep]||0}); return {ok:1,to,next:gap}; }   /* hiệu ứng = chiêu 1 của class */
   if(op==='pen'){ const I=S.LEGEND.items.but; if(!S.legendOwn(p,'but')) return {err:`Chưa ghép đủ ${S.LEGEND.need} mảnh ${I.name}`}; if(s.dead>t) return {err:'Đang gục'}; const lg=p.legend; if((lg.butAt||0)>t) return {err:`Bút đang hồi, ${Math.ceil((lg.butAt-t)/1000)} giây nữa`};   /* Cây Bút của Redtype */

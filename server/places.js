@@ -315,14 +315,37 @@ on('learn',(pl,m)=>{ const c=S.COURSES[m.skill], p=pl.prof; if(!c) return {err:'
   if(!take(pl,c.price)) return {err:`Khoá học ${fmt(c.price)}, không đủ tiền`};
   return startTask(pl,'hoc',c.dur,()=>{ p.skills[m.skill]=true; markDirty(pl); send(pl,{t:'rw',skill:m.skill,msg:'Học xong: '+c.name}); return {}; },{anim:'work',name:'Học online: '+c.name}); });
 
-/* ---------- chợ online (mua bán đồ với người chơi khác, ở phòng) ---------- */
+/* ---------- chợ online (mua bán đồ với người chơi khác): mua, đăng bán, gỡ món ở đâu cũng được (nút Chợ đồ cũ hoặc laptop) ---------- */
 let LIST=db.market();
-const listView=()=>LIST.slice(0,80).map(l=>({id:l.id,s:l.sname,item:l.item,n:l.n,price:l.price,mine:false,seller:l.seller}));
+const fs=require('fs'), path=require('path'), HFILE=path.join(process.env.DATA_DIR||path.join(__dirname,'data'),'mkhist.json');
+let HIST={}; try{ HIST=JSON.parse(fs.readFileSync(HFILE,'utf8'))||{}; }catch(e){}   /* giá vừa bán của từng món: [[giá 1 cái, lúc bán], ...] */
+const saveHist=()=>{ try{ fs.writeFileSync(HFILE,JSON.stringify(HIST)); }catch(e){ console.error(e); } };
+/* định giá theo độ hiếm: quét túi đồ mọi người (10 phút / lần) xem bao nhiêu người đang giữ món, cộng số cái đang bán trên chợ và giá vừa bán */
+let CIRC={hold:{},units:{},n:1,at:0};
+function scanCirc(){ const hold={}, units={}, seen=new Set();
+  const add=(uid,items)=>{ if(!uid||seen.has(uid)) return; seen.add(uid); for(const [k,c] of Object.entries(items||{})) if(c>0){ hold[k]=(hold[k]||0)+1; units[k]=(units[k]||0)+c; } };
+  for(const pl of players.values()) if(pl.prof) add(pl.uid,pl.prof.items);   /* người đang online: túi đồ mới nhất trong bộ nhớ */
+  for(const p of db.allProfiles()) add(p._uid,p.items);
+  CIRC={hold,units,n:Math.max(1,seen.size),at:now()}; }
+const rdP=v=>v<10000?Math.max(100,Math.round(v/100)*100):Math.round(v/1000)*1000;
+function quote(k){ const r=S.mkRef(k); if(!r) return null; const M=S.MARKET, T=M.tiers;
+  if(now()-CIRC.at>M.scan) scanCirc();
+  const hold=CIRC.hold[k]||0, share=hold/CIRC.n, listed=LIST.filter(l=>l.item===k), onMk=listed.reduce((s,l)=>s+l.n,0);
+  let tier=r.tier; if(!r.buy){ if(hold<=2||share<.03) tier++; else if(share>.35) tier--; } tier=Math.max(0,Math.min(T.length-1,tier));   /* ít người có thì lên 1 bậc, ai cũng có thì xuống 1 bậc; đồ shop có bán thì giữ bậc */
+  let fair=r.v*T[tier].mul/T[r.tier].mul*Math.max(.7,1/(1+.04*onMk));   /* chợ đang nhiều hàng này thì giá xuống, tối đa -30% */
+  const cut=now()-M.histDays*864e5, sold=(HIST[k]||[]).filter(s=>s[1]>cut).map(s=>s[0]).sort((a,b)=>a-b), med=sold.length?sold[sold.length>>1]:0;
+  if(sold.length>=2) fair=fair*.4+med*.6; else if(med) fair=fair*.7+med*.3;   /* giá người ta vừa trả trong 7 ngày */
+  if(r.buy) fair=Math.min(fair,r.buy*M.shopCap); if(r.npc) fair=Math.max(fair,r.npc*1.1);
+  const cheapest=listed.length?Math.round(Math.min(...listed.map(l=>l.price/l.n))):0;
+  return {k,tier,tier0:r.tier,fair:rdP(fair),quick:rdP(fair*M.quick),high:rdP(fair*M.high),buy:r.buy,npc:r.npc,hold,players:CIRC.n,onMk,cheapest,med,sold:(HIST[k]||[]).slice(-5).map(s=>s[0])}; }
+const listView=uid=>{ const Q={}, q=k=>Q[k]||(Q[k]=quote(k)||{});
+  return LIST.slice(0,80).map(l=>({id:l.id,s:l.sname,item:l.item,n:l.n,price:l.price,mine:l.seller===uid,tier:q(l.item).tier|0,fair:q(l.item).fair||0,at:l.at})); };
 on('mk',(pl,m)=>{ const p=pl.prof;
-  if(m.op==='list') return {list:listView().map(l=>({...l,mine:l.seller===pl.uid,seller:undefined}))};
-  if(m.op!=='buy'&&!W.inOwnRoom(pl)) return {err:'Đăng bán / gỡ món: mở laptop ở phòng của bạn'};   /* mua thì ở đâu cũng được (nút Cửa hàng online) */
+  if(m.op==='list') return {list:listView(pl.uid)};
+  if(m.op==='quote'){ const q=quote(String(m.item||'')); return q?{q}:{err:'Món này không bán được'}; }
+  if(m.op==='mine'){ const out={}; for(const [k,c] of Object.entries(p.items||{})) if(c>0&&S.ITEMS[k]){ const q=quote(k); if(q) out[k]={tier:q.tier,fair:q.fair}; } return {mine:out}; }   /* bậc hiếm + giá đề xuất cho cả túi đồ (lưới Đăng bán) */
   if(m.op==='sell'){ const item=String(m.item||''), n=Math.max(1,m.n|0), price=Math.round(+m.price||0);
-    if(!S.ITEMS[item]||!has(pl,item,n)) return {err:'Không đủ đồ'}; if(price<1000||price>S.MARKET.maxPrice) return {err:'Giá từ 1.000đ'};
+    if(!S.ITEMS[item]||!has(pl,item,n)) return {err:'Không đủ đồ'}; if(!Number.isFinite(price)||price<1000||price>S.MARKET.maxPrice) return {err:`Giá từ 1.000đ tới ${fmt(S.MARKET.maxPrice)}`};
     if(LIST.filter(l=>l.seller===pl.uid).length>=S.MARKET.maxListings) return {err:`Tối đa ${S.MARKET.maxListings} món đang bán`};
     addItem(pl,item,-n); const id=db.addListing(pl.uid,p.name,item,n,price); C.save(pl); LIST=db.market(); return {id}; }
   if(m.op==='cancel'){ const l=LIST.find(l=>l.id===(m.id|0)); if(!l||l.seller!==pl.uid) return {err:'Không phải món của bạn'};
@@ -333,6 +356,7 @@ on('mk',(pl,m)=>{ const p=pl.prof;
     db.tx(()=>{ db.delListing(l.id); take(pl,l.price,true); C.spent(pl,l.price-net); addItem(pl,l.item,l.n); C.save(pl);   /* người bán nhận net, phí sàn vào ngân khố */
       const sp=byUid.get(l.seller); if(sp){ give(sp,net); C.save(sp); note(sp,`${p.name} đã mua ${l.n} ${S.ITEMS[l.item].name} của bạn: +${fmt(net)}`,'vnd'); }
       else { const prof=db.profile(l.seller); if(prof){ prof.money+=net; (prof.inbox=prof.inbox||[]).push(`${p.name} đã mua ${l.n} ${S.ITEMS[l.item].name}: +${fmt(net)}`); db.saveProfile(l.seller,prof); } } });
+    (HIST[l.item]=HIST[l.item]||[]).push([Math.round(l.price/l.n),now()]); HIST[l.item]=HIST[l.item].slice(-S.MARKET.hist); saveHist();
     LIST=db.market(); return {item:l.item,n:l.n}; } });
 hook('login',pl=>{ const ib=pl.prof.inbox; if(ib&&ib.length){ for(const m of ib) note(pl,m,'vnd'); pl.prof.inbox=[]; markDirty(pl); } });
 

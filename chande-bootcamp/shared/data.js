@@ -1022,7 +1022,12 @@ LINHCAT.bn={sp:'blacknut',lv:40,cycle:40e3,stay:10e3,ball:'bong_ht',stat:.2,mul:
     nghienmotion:[[15.4,10.6],[23.8,10.4],[11.8,19.6]],lavi:[[21,13.8],[14.4,14],[10.8,16.8]],yenlang:[[14.6,10.4],[6,7.4],[28.2,12]],das:[[19,15.4],[22.9,8],[8.4,6]]}};
 LINHCAT.ball.bong_ht=3; LINHCAT.shop.bong_ht=1500000; ITEMS.bong_ht={name:'Bóng Huyền Thoại',icon:'lcball3'};
 for(const sc of Object.keys(LINHCAT.bn.maps)) if(!LINHCAT.maps[sc]) LINHCAT.maps[sc]={spots:[],bn:1};   /* nơi làm việc: không có Lính Cát hoang thường, chỉ Blacknut ghé qua */
-function bnWild(ms,scene){ const B=LINHCAT.bn, c=Math.floor(ms/B.cycle); if(ms-c*B.cycle>=B.stay||!B.maps[scene]) return []; let h=(c*2654435761)>>>0; h^=h>>>15; h=Math.imul(h,0x2c1b3c6d)>>>0; h^=h>>>12;
+/* tác dụng của Mèn Mén / Blacknut ghi trên Poke Deck, bảng Huyền Thoại xuất hiện (thanh trên cùng): tính từ số ở LINHCAT.men / LINHCAT.bn */
+{ const MN=LINHCAT.men, B=LINHCAT.bn, pc=v=>Math.round(v*100)+'%', x=v=>String(Math.round(v*100)/100).replace('.',',');
+  LC_SPECIES.men_men.fx=[`Chỉ số ×${x(MN.mul)}, thêm ${pc(MN.perLv)} mỗi cấp của chủ (chủ cấp 10: ×${x(MN.mul*(1+10*MN.perLv))}, cấp 30: ×${x(MN.mul*(1+30*MN.perLv))})`,
+    `Ở MU: công Mèn Mén = công của chủ ×${x(MN.mul)}`,`Ném Cứt: mỗi đòn +1 tầng độc (tối đa ${MN.poison.max}), đối thủ chậm lại, giảm ${pc(MN.poison.healCut)} hồi máu; ở MU mỗi giây độc trừ ${pc(MN.mu.dot)} công × số tầng`,'Mỗi người chỉ có 1 con'];
+  LC_SPECIES.blacknut.fx=[`Đứng đầu đội (còn máu): Máu, Mana, Công, Thủ của chủ ở MU +${pc(B.stat)}`,`Mọi tiền và EXP chủ tự kiếm được ×${B.mul}`,`Chỉ Bóng Huyền Thoại bắt được, mỗi lần chỉ ở ${B.stay/1000} giây`]; }
+function bnWild(ms,scene){ const B=LINHCAT.bn, c=Math.floor(ms/B.cycle); if(ms-c*B.cycle>=B.stay||!B.maps[scene]) return []; let h=(c*2654435761)>>>0; h^=h>>>15; h=Math.imul(h,0x2c1b3c6d)>>>0; h=(h^(h>>>12))>>>0;   /* >>>0: XOR ra số âm thì ks[âm] = undefined, Blacknut mất lượt */
   const ks=Object.keys(B.maps), sc=ks[h%ks.length]; if(sc!==scene) return []; const sp=B.maps[sc][(h>>>8)%B.maps[sc].length]; return [{i:3000,key:'bn:'+c,sp:B.sp,lv:B.lv,x:sp[0],y:sp[1],bn:1,until:c*B.cycle+B.stay}]; }
 /* con đứng đầu đội là Blacknut (còn sức) */
 const lcLeadBn=p=>{ const m=p&&p.lc&&p.lc.party&&p.lc.party[0]; return !!(m&&m.hp>0&&LC_SPECIES[m.sp]&&LC_SPECIES[m.sp].bn); };
@@ -1374,6 +1379,14 @@ const muStats=(cls,lv,fruit,wep,lg,ex)=>{ const c=MU.cls[cls], k=1+(lv-1)*.08, f
 const ENH={max:12,rate:[1,.95,.9,.82,.72,.62,.5,.4,.3,.2,.12,.07].map(v=>v/2),   /* tỉ lệ thành công đã giảm một nửa: +1 50% … +12 3,5% */
   fee:lv=>50000*(lv+1),gemPrice:1000000,gemPack:{n:5,price:4700000},lcPer:.002,lcMax:.15,legendRate:.8,
   per:{weapon:{atk:.075},set:{hp:.06,def:.06},wing:{hp:.045,def:.03},neck:{mp:.06,atk:.03},charm:{atk:.045},aura:{hp:.03,atk:.03},feet:{hp:.03,def:.03},shield:{hp:.04,def:.04}}};
+// mỗi cấp cường hoá còn tăng chính các chỉ số nổi bật ghi trên thẻ món (chỉ số riêng của set legacy / vũ khí / phụ kiện) thêm 5%: +12 = ×1,6
+ENH.main=.05; const enhMul=L=>1+(L||0)*ENH.main;
+/* Tẩy tuỷ (Phù Thuỷ Cường Hoá): món +12 rút hết 12 lỗ thành 1 Vuốt Thần Kim Quy (món về +0, không mất món); gắn vuốt vào 1 món +12 khác (mỗi món 1 vuốt, đã gắn thì không tẩy tuỷ được).
+   Đang dùng món có vuốt: đánh thường lan (Tiên Nữ, Phù Thuỷ: bắn lan quanh mục tiêu; Chiến Binh, Đại Tượng: chém lan quanh mình), đánh xa hơn, 1% gọi Rồng Thần cắn 0,1% máu tối đa của quái. Dùng nhiều món có vuốt: lan mạnh hơn, dễ gọi rồng hơn */
+ENH.kq={item:'vuot_kim_quy',fee:2000000,splash:.5,splashUp:.1,r:{ban:2.5,chem:0},n:5,reach:{ban:2,chem:1},dragon:{chance:.01,up:.005,pct:.001,r:3,n:6},style:{elf:'ban',dw:'ban',dk:'chem',dt:'chem'},vi:{ban:'Bắn lan',chem:'Chém lan'}};
+ITEMS.vuot_kim_quy={name:'Vuốt Thần Kim Quy',icon:'kqclaw'};
+const kqOf=(cls,n)=>{ if(!n) return null; const K=ENH.kq, sty=K.style[cls]||'chem'; return {n,sty,reach:K.reach[sty],r:K.r[sty],splash:K.splash+K.splashUp*(n-1),chance:K.dragon.chance+K.dragon.up*(n-1)}; };   /* r 0 = chém quanh mình trong cả tầm đánh */
+const enhMain=k=>{ const w=MU.weapons[k], L=MU.legacy[k], a=MU.acc[k]; return w?{...(w.atk?{atk:w.atk}:{}),...(w.bonus||{})}:L?{...(L.bonus||{})}:a?{...(a.bonus||{})}:{}; };
 const gemCost=n=>n===ENH.gemPack.n?ENH.gemPack.price:ENH.gemPrice*n;   // giá mua n ngọc (gói 5 viên rẻ hơn)
 ITEMS.ngoc_ch={name:'Ngọc Cường Hoá',icon:'gem_enh'}; ITEMS.ngoc_ch_ht={name:'Ngọc Cường Hoá Huyền Thoại',icon:'gem_enh_ht'};
 // loại đồ để tính chỉ số mỗi cấp cường hoá: weapon / set (giáp class, set legacy) / wing / neck / charm / aura
@@ -1504,6 +1517,7 @@ NPC_LOOKS.mu_shoes={name:'Tiệm Giày Lướt Gió',look:{gender:'nam',hair:'sw
 // lực chiến: công (theo tốc đánh + chỉ số phụ đánh ra: chí mạng, độc, phép, trừ giáp, giật sét, hút máu, làm chậm), thủ, máu (theo giáp), mana, hồi máu, hào quang
 const muPower=(s,x={})=>Math.round(s.atk*10*(.7+.3*(s.aspd||1))*(1+(x.crit||0)*.5+(x.tdmg||0)*.6+(x.spell||0)*.3+(x.shred||0)*.3+(x.chainp||0)*.3+(x.drain||0)*.4+(x.slowp||0)*.1)+s.def*8+s.hp*1.5*(1+(x.armor||0))+s.mp*.6+(x.regen||0)*40+(x.aura||0)*200);
 for(const [k,f] of Object.entries(MU.fruits)) ITEMS['taq_'+k]={name:f.name,icon:'fruit_'+k};
+MU.fruitWipe=5000000;   /* phí xoá Trái Ác Quỷ đang ăn khỏi người (ở Vệ binh) để ăn trái khác; trái cũ mất luôn */
 // Thợ Rèn Huyền Thoại (store vũ khí MU): 50 vũ khí = 10 loại × 5 hệ. Loại quyết định kiểu vung khi ra chiêu + 1 chỉ số phụ, hệ quyết định hiệu ứng nổ ở mục tiêu.
 // Công +8%…+24% theo bậc hệ + bậc loại; sao 1–5 (5 sao = Huyền Thoại). Mua xong vào túi và cầm luôn, đổi vũ khí ở Thợ Rèn hoặc Vệ binh.
 MU.wtypes={dagger:{name:'Dao Găm',tier:0,bonus:{crit:.04},swing:'stab',desc:'đâm nhanh 2 nhát'},sword:{name:'Kiếm',tier:0,bonus:{hp:.03},swing:'slash',desc:'chém vòng cung'},
@@ -2704,7 +2718,22 @@ SHOPEE.base=(k,ms)=>{ const c=SHOPEE.item(k); if(!c) return 0; return SHOPEE.fla
 /* giảm máu mọi boss 40% (24/10, chủ game yêu cầu), trừ Pepe: mọi boss MU (cả 5 anh em Siêu Nhân, Megazord, Đỉnh Bắc), MCK ở Ké, Megatron. Máu đổi dạng (hpMul) vẫn tính theo máu mới */
 { const K=.6; for(const [k,b] of Object.entries(MU.bosses)) if(k!=='pepe'){ b.hp=Math.round(b.hp*K); b.perPlayer=Math.round((b.perPlayer||0)*K); }
   MU.boss.hp=MU.bosses.luffy.hp; MU.boss.perPlayer=MU.bosses.luffy.perPlayer; MCK.hp=Math.round(MCK.hp*K); MCK.hpPer=Math.round(MCK.hpPer*K); MEGATRON.hp=Math.round(MEGATRON.hp*K); }
-return {CLUB_DOORS,LC_ASC,lcAsc,lcLeadAsc,lcLeadBn,lcEff,LCCLUB,GEAR,LCFOREST,PETS,PETFOOD,PETCFG,petState,KENNY,kennyWhere,STATE_LOAN,SHOPEE,EPL,EPL_CLUBS,T,RULES,LOOK,SLOTS,CLOTHES,FOOD,CROPS,FARM,PLACES,INTERIORS,CLUB,ITEMS,SKILLS,QUESTS,DAILY,FISH,KAYAK_PRICE,KAYAK_MIN,CAR_PRICE,TREASURE,FISHING,NPCS,NPC_LOOKS,PICKUPS,SPOTS,COINS,FORAGE,
+/* Chợ đồ cũ: định giá theo độ hiếm. mkRef(k) = giá tham chiếu 1 món + bậc hiếm gốc (theo nguồn có món); server (places.js) chỉnh bậc theo số người đang giữ món, số đang bán trên chợ và giá vừa bán */
+MARKET.tiers=[{k:'thuong',name:'Thường',col:'#b9b4a8',mul:1},{k:'kha',name:'Khá',col:'#7fd67a',mul:1.25},{k:'hiem',name:'Hiếm',col:'#6fb6ff',mul:1.6},{k:'suthi',name:'Sử thi',col:'#c58cff',mul:2.2},{k:'huyenthoai',name:'Huyền thoại',col:'#ffb43a',mul:3.2}];
+Object.assign(MARKET,{quick:.85,high:1.3,shopCap:.95,npcUp:1.5,scan:600e3,hist:12,histDays:7});   /* bán nhanh / giá cao so với giá đề xuất; đồ shop có bán thì không đề xuất quá 95% giá mới; đồ NPC thu mua thì đề xuất ×1,5 giá NPC */
+MARKET.fixed={taq_:[15000000,4],vk_:[6000000,3],huy_hieu_pepe:[8000000,4],manh_trieu_hoi:[5000000,4],ngoc_ch_ht:[4000000,4],sach_kn5:[0,2],vay_rong:[1500000,3],cuon_truc:[1200000,3],
+  lua_ma:[600000,2],cup_sotd:[3000000,3],dau_gau:[2000000,3],gunpla:[900000,2],den_bingo:[1500000,3],mu_phuthuy:[800000,2],ao_bingo:[800000,2],zen_token:[500000,2],vuot_kim_quy:[30000000,4],ngoc_uoc:[300000,3],ngoc_tam_linh:[400000,3],ngoc_hon_nguyen:[700000,3]};   /* món không bán ở shop / NPC không mua: [giá, bậc]; giá 0 = giữ giá shop, chỉ nâng bậc */
+const mkRef=k=>{ if(!ITEMS[k]) return null;
+  const aux=Object.values(SHOPEE.aux).find(a=>a.item===k&&a.n), seed=k.startsWith('hat_')&&CROPS[k.slice(4)], wp=MU.weapons[k];
+  const buy=LINHCAT.shop[k]||(INGREDIENTS[k]&&INGREDIENTS[k].price)||(FEED[k]&&FEED[k].price)||(seed&&seed.seed)||(aux&&Math.round(aux.price/aux.n))||(MU.pasBook[k]&&MU.pasBook[k].price)||(wp&&wp.store&&wp.price)||(k==='ngoc_ch'&&ENH.gemPrice)||0;
+  const rc=k.startsWith('mon_')&&RECIPES[k.slice(4)], npc=SELL[k]||MU.matPrice[k]||MU.jewelSell[k]||(rc&&rc.pay)||0;
+  const fx=MARKET.fixed[k]||MARKET.fixed[Object.keys(MARKET.fixed).find(p=>p.endsWith('_')&&k.startsWith(p))];
+  const byV=v=>v<30000?0:v<200000?1:v<1e6?2:v<5e6?3:4;
+  if(fx) return {v:fx[0]||buy||npc*MARKET.npcUp||100000,buy:fx[0]?0:buy,npc,tier:fx[1]};
+  if(buy) return {v:buy,buy,npc,tier:Math.min(2,byV(buy)-1<0?0:byV(buy)-1)};   /* shop có bán thì không hiếm: tối đa bậc Hiếm (vũ khí MU đắt) */
+  if(npc) return {v:Math.round(npc*MARKET.npcUp),buy:0,npc,tier:byV(npc*MARKET.npcUp)};
+  return {v:100000,buy:0,npc:0,tier:1}; };
+return {kqOf,mkRef,enhMul,enhMain,CLUB_DOORS,LC_ASC,lcAsc,lcLeadAsc,lcLeadBn,lcEff,LCCLUB,GEAR,LCFOREST,PETS,PETFOOD,PETCFG,petState,KENNY,kennyWhere,STATE_LOAN,SHOPEE,EPL,EPL_CLUBS,T,RULES,LOOK,SLOTS,CLOTHES,FOOD,CROPS,FARM,PLACES,INTERIORS,CLUB,ITEMS,SKILLS,QUESTS,DAILY,FISH,KAYAK_PRICE,KAYAK_MIN,CAR_PRICE,TREASURE,FISHING,NPCS,NPC_LOOKS,PICKUPS,SPOTS,COINS,FORAGE,
   KAYAK_SPOT,BUOYS,CARS,BEAGLE_SPOT,CHICKEN_HOME,LAKE_Y,SPAWN,SOCIAL,ROOMS,BATHHOUSE,POOL,ACH,KE_JOB,WHEELIE,BIKES,SONGS,DANCE,RECEPTION,NEEDS,ROOM_ACTS,PHOTO_SPOTS,TRAVEL,JOB,WORK_TASKS,OFFICE_PERKS,WORK_WORDS,INTERVIEW,INTERVIEW_PICK,INTERVIEW_PASS,OFFICE,
   lvSpeed,OPTIMUS,MEGATRON,MCK,WILDLIFE,FOLLOWERS,OII,SHISHA,NPC_ROAM,roamPos,PIG_STEAL,LUMEN,DIEP,YENLANG,PICKLE,PK_SETS,DALAT,DL_FARM,DL_LAND,KE_LAND,MOTO,BIKESHARE,CSGT,PCAR,PARK,MUSEUM,TEMPLE,NETCAFE,BUTTERFLY,LO,DOGS,DAS,KE_YARD,ANIMALS,FEED,INGREDIENTS,RECIPES,COOK,DL_FISH,HORSE,CRATES,RACE,SELL,DEST,GRAB,grabFare,COURSES,MARKET,ACTS,ACT_DUR,FL,SCENE_DEST,SCENE_SIZE,
   ECON,fineOf,HOME,homeTier,homeDefault,homeGrid,homeFoot,homeSolid,homeAnchor,homeFits,homeCozy,homeScore,homeBuff,HAOSANG,hsPts,hsTier,hsBonus,loanOwed,LEGEND,legendDone,legendCount,legendOwn,legendAch,MU,muStats,muPower,mythOf,mythIdx,mountKey,XICHTHO,XT_ELS,xtBonus,ENH,gemCost,enhKind,shoeSpeed,DUONGVU,dvWhere,LAVI,HW_SETS,LC_TYPES,LC_EFF,LC_MOVES,LC_TYPE_MOVES,LC_SPECIES,LINHCAT,lcStats,lcStatsOf,lcHealFee,lcMoves,lcNext,lcWild,RF,NMOTION,GUARD,TOP_TITLES,BEARPLUS,VNPT,MIEU,lunarDate,holyDay,vnptServing,LOGIN7,LOGIN30,DAYQ,ALBUM,SEASON,seasonOn,pumpkinsNow,vnTime,WEEKDAYS,mealStatus,hunger,levelOf,fmt,plotState,lookToTemplate,gameMs,realTime,addDays,dayOfWeek,isWeekend,dailyTasks,otTask};

@@ -236,12 +236,7 @@ UI.learn=()=>{ hubTab='learn'; UI.hub(); };   // mở thẳng tab Học kỹ nă
 async function loadMarket(){ const r=await NET.req({t:'mk',op:'list'}); market=r.list||[]; const w=await NET.req({t:'who'}); who=w.list||[]; UI.refresh(); }
 function hubHtml(){ const g=G(), tabs=[['market','Chợ đồ cũ'],['learn','Học kỹ năng'],['chat','Chat online'],['work','Làm remote']];
   let body='';
-  if(hubTab==='market'){ const mine=market.filter(l=>l.mine), others=market.filter(l=>!l.mine);
-    body=money()+`<h5>Đang bán</h5><div class="list">${others.map(l=>`<div class="row">${ico(l.item)}<span>${esc(SD.ITEMS[l.item]?SD.ITEMS[l.item].name:l.item)} ×${l.n} <small class="muted">của ${esc(l.s)}</small></span><span>${fmt(l.price)}</span>${btn('mkbuy','Mua',{id:l.id},'pri')}</div>`).join('')||'<p class="muted">Chưa ai bán gì</p>'}</div>
-      <h5>Của bạn (${mine.length}/${SD.MARKET.maxListings})</h5><div class="list">${mine.map(l=>`<div class="row">${ico(l.item)}<span>${esc(SD.ITEMS[l.item].name)} ×${l.n}</span><span>${fmt(l.price)}</span>${btn('mkcancel','Gỡ',{id:l.id})}</div>`).join('')}</div>
-      <h5>Đăng bán</h5><div class="form"><select id="mkItem">${Object.entries(g.items).map(([k,n])=>`<option value="${k}">${esc(SD.ITEMS[k]?SD.ITEMS[k].name:k)} (có ${n})</option>`).join('')}</select>
-      <input id="mkN" type="number" min="1" value="1" aria-label="Số lượng"><input id="mkP" type="number" min="1000" step="1000" placeholder="Giá (đ)" aria-label="Giá">${btn('mksell','Đăng bán','', 'pri')}</div>
-      <p class="muted">Phí sàn ${SD.MARKET.fee*100}%. Người mua trả tiền, bạn nhận tiền kể cả khi đang offline.</p>`; }
+  if(hubTab==='market') body=mkBody();
   if(hubTab==='learn') body=money()+`<div class="list">${Object.entries(SD.COURSES).map(([k,c])=>`<div class="row tall"><span><b>${c.name}</b> · cấp ${c.level} · ${c.dur} giây<br><small class="muted">${c.desc}</small></span><span>${g.skills[k]?'đã học':fmt(c.price)}</span>${g.skills[k]?'':btn('learn','Học',{k},g.level>=c.level?'pri':'')}</div>`).join('')}</div>`;
   if(hubTab==='chat') body=`<div class="ochlog" id="ochLog">${ochLog.map(m=>`<div class="${m.dm?'dm':''}"><b>${esc(m.from)}${m.toName?' → '+esc(m.toName):''}:</b> ${esc(m.m)}</div>`).join('')||'<p class="muted">Kênh chung: ai đang online đều đọc được</p>'}</div>
     <div class="form"><select id="ochTo"><option value="">Kênh chung</option>${who.filter(w=>w.id!==NET.pid).map(w=>`<option value="${w.id}">Nhắn riêng: ${esc(w.n)}</option>`).join('')}</select><input id="ochIn" maxlength="120" placeholder="Gõ tin nhắn..." aria-label="Tin nhắn">${btn('och','Gửi','', 'pri')}</div>
@@ -249,14 +244,56 @@ function hubHtml(){ const g=G(), tabs=[['market','Chợ đồ cũ'],['learn','H�
   if(hubTab==='work') body=workHtml(true)+'<h5>Lumen Studio (remote)</h5>'+lumenHtml(true);
   return `<div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${k===hubTab?'on':''}" data-a="tab" data-k="${k}">${n}</button>`).join('')}</div>${body}`; }
 ACT.tab=d=>{ hubTab=d.k; if(d.k!=='work') loadMarket(); draw(); };
+/* ---------- Chợ đồ cũ (nút Chợ đồ cũ + tab laptop dùng chung): tab Mua có bậc hiếm, nhãn Rẻ / Đắt so với giá thị trường; tab Đăng bán chọn món trong túi, giá gợi ý theo độ hiếm, xem trước tiền nhận ---------- */
+let shopTab='buy', mkSel=null, mkQ=null, mkN=1, mkU=0, mkMine={};
+const mkTier=t=>{ const T=SD.MARKET.tiers[t|0]||SD.MARKET.tiers[0]; return `<span class="mktier" style="--c:${T.col}">${T.name}</span>`; };
+const mkDeal=l=>{ if(!l.fair) return ''; const r=l.price/l.n/l.fair; return r<=.9?'<span class="mkdeal good">Rẻ</span>':r>=1.3?'<span class="mkdeal bad">Đắt</span>':''; };
+const mkName=k=>SD.ITEMS[k]?SD.ITEMS[k].name:k;
+async function loadMine(){ const r=await NET.req({t:'mk',op:'mine'}); mkMine=r.mine||{}; UI.refresh(); }
+function mkBody(){ const tabs=[['buy','Mua'],['sell','Đăng bán']];
+  return money()+`<div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${k===shopTab?'on':''}" data-a="shoptab" data-k="${k}">${n}</button>`).join('')}</div>`+(shopTab==='sell'?mkSellHtml():mkBuyHtml()); }
+function mkBuyHtml(){ const q=shopQ.trim().toLowerCase(), per=l=>l.price/l.n;
+  const L=market.filter(l=>!l.mine&&(!q||mkName(l.item).toLowerCase().includes(q)||String(l.s).toLowerCase().includes(q)));
+  if(shopSort==='cheap') L.sort((a,b)=>a.price-b.price); else if(shopSort==='dear') L.sort((a,b)=>b.price-a.price);
+  else if(shopSort==='rare') L.sort((a,b)=>b.tier-a.tier||b.price-a.price); else if(shopSort==='deal') L.sort((a,b)=>per(a)/(a.fair||per(a))-per(b)/(b.fair||per(b)));
+  const sorts=[['new','Mới đăng'],['deal','Hời nhất'],['rare','Hiếm nhất'],['cheap','Rẻ nhất'],['dear','Đắt nhất']], each=l=>l.n>1?`<small class="muted">· ${fmt(Math.round(per(l)))}/cái</small>`:'';
+  return `<div class="form"><input id="shopQ" maxlength="30" value="${esc(shopQ)}" placeholder="Tìm tên món hoặc người bán..." aria-label="Tìm">${btn('shopq','Tìm','','pri')}${shopQ?btn('shopq','Xoá tìm',{clear:1}):''}</div>
+    <div class="tabs">${sorts.map(([k,n])=>`<button class="tab ${k===shopSort?'on':''}" data-a="shopsort" data-k="${k}">${n}</button>`).join('')}</div>
+    <h5>Đang bán (${L.length})</h5><div class="list">${L.map(l=>`<div class="row">${ico(l.item)}<span>${esc(mkName(l.item))} ×${l.n} ${mkTier(l.tier)}${mkDeal(l)}<br><small class="muted">của ${esc(l.s)}${l.fair?` · giá thị trường ~${fmt(l.fair)}/cái`:''}</small></span><span>${fmt(l.price)} ${each(l)}</span>${btn('mkbuy','Mua',{id:l.id},G().money>=l.price?'pri':'')}</div>`).join('')||`<p class="muted">${q?'Không thấy món nào khớp':'Chưa ai bán gì'}</p>`}</div>
+    <p class="muted">Mua ở đâu cũng được, đồ vào túi ngay. Nhãn <b>Rẻ</b> / <b>Đắt</b> là so với giá thị trường tính theo độ hiếm của món. Muốn bán thì sang tab Đăng bán.</p>`; }
+function mkSellHtml(){ const g=G(), M=SD.MARKET, mine=market.filter(l=>l.mine), it=g.items||{}, val=k=>(mkMine[k]||{}).fair||0, tr=k=>(mkMine[k]||{}).tier|0;
+  const inv=Object.entries(it).filter(([k,n])=>n>0&&SD.ITEMS[k]).sort((a,b)=>tr(b[0])-tr(a[0])||val(b[0])*b[1]-val(a[0])*a[1]);
+  if(mkSel&&!(it[mkSel]>0)){ mkSel=null; mkQ=null; }
+  const have=mkSel?it[mkSel]:0, q=mkQ&&mkQ.k===mkSel?mkQ:null; mkN=Math.max(1,Math.min(have||1,mkN));
+  const form=!mkSel?'':`<div class="mksell"><div class="mkhead">${ico(mkSel)}<span><b>${esc(mkName(mkSel))}</b> ${q?mkTier(q.tier):''}<br><small class="muted">Trong túi: ${have}</small></span></div>
+    ${q?`<p class="muted">${q.hold}/${q.players} người đang giữ · trên chợ ${q.onMk} cái${q.cheapest?` · rẻ nhất ${fmt(q.cheapest)}/cái`:''}${q.med?` · vừa bán ~${fmt(q.med)}/cái`:''}${q.buy?` · shop bán mới ${fmt(q.buy)}`:''}${q.npc?` · NPC thu ${fmt(q.npc)}`:''}</p>
+      <div class="mkpre">${[['quick','Bán nhanh'],['fair','Đề xuất'],['high','Giá cao']].map(([k,n])=>`<button class="mkp ${mkU===q[k]?'on':''}" data-a="mkpre" data-v="${q[k]}"><small>${n}</small><b>${fmt(q[k])}</b></button>`).join('')}</div>`:'<p class="muted">Đang định giá...</p>'}
+    <div class="form mkform"><span>Số lượng</span>${btn('mkqty','−',{v:-1})}<input id="mkN" type="number" min="1" max="${have}" value="${mkN}" aria-label="Số lượng">${btn('mkqty','+',{v:1})}${btn('mkqty','Tất cả',{v:'all'})}
+      <span>Giá 1 cái</span><input id="mkU" type="number" min="100" step="100" value="${mkU||''}" aria-label="Giá 1 cái"></div>
+    <p id="mkSum">${mkSumTxt()}</p>${btn('mksell','Đăng bán','','pri')} ${btn('mkpick','Bỏ chọn',{k:''})}</div>`;
+  return `<h5>Chọn món trong túi (${inv.length})</h5><div class="mkgrid">${inv.map(([k,n])=>`<button class="mkcell ${k===mkSel?'on':''}" data-a="mkpick" data-k="${k}" title="${esc(mkName(k))}">${ico(k)}<b>×${n}</b><small>${esc(mkName(k))}</small>${mkMine[k]?mkTier(tr(k))+`<i>~${fmt(val(k))}</i>`:''}</button>`).join('')||'<p class="muted">Túi đồ trống</p>'}</div>
+    ${form}<h5>Bạn đang bán (${mine.length}/${M.maxListings})</h5><div class="list">${mine.map(l=>`<div class="row">${ico(l.item)}<span>${esc(mkName(l.item))} ×${l.n} ${mkTier(l.tier)}${mkDeal(l)}</span><span>${fmt(l.price)}</span>${btn('mkcancel','Gỡ',{id:l.id})}</div>`).join('')||'<p class="muted">Chưa đăng món nào</p>'}</div>
+    <p class="muted">Đăng bán, gỡ món ở đâu cũng được. Phí sàn ${M.fee*100}%. Người mua trả tiền, bạn nhận tiền kể cả khi đang offline. Giá gợi ý theo độ hiếm: bao nhiêu người đang giữ món, số đang bán trên chợ, giá vừa bán 7 ngày qua.</p>`; }
+function mkSumTxt(){ const M=SD.MARKET, tot=Math.round((mkU||0)*mkN), net=Math.round(tot*(1-M.fee)), q=mkQ&&mkQ.k===mkSel?mkQ:null;
+  if(!tot) return '<span class="muted">Nhập giá 1 cái hoặc chọn mức giá gợi ý</span>';
+  const warn=tot<1000?'Tổng tối thiểu 1.000đ':tot>M.maxPrice?`Tối đa ${fmt(M.maxPrice)}`:q&&mkU>q.high*1.5?'Cao hơn nhiều so với thị trường, khó bán':q&&q.npc&&mkU<q.npc?'Thấp hơn giá NPC thu mua':'';
+  return `Tổng <b>${fmt(tot)}</b> · phí sàn ${fmt(tot-net)} · bạn nhận <b>${fmt(net)}</b>${warn?` · <b class="mkbad">${warn}</b>`:''}`; }
+ACT.shoptab=d=>{ shopTab=d.k; if(d.k==='sell') loadMine(); loadMarket(); draw(); };
+ACT.mkpick=async d=>{ mkSel=d.k||null; mkQ=null; mkN=1; mkU=0; draw(); if(!mkSel) return; const k=mkSel, r=await NET.req({t:'mk',op:'quote',item:k}); if(mkSel!==k) return; mkQ=r.q||null; mkU=mkQ?mkQ.fair:0; draw(); };
+ACT.mkpre=d=>{ mkU=+d.v; draw(); };
+ACT.mkqty=d=>{ const have=G().items[mkSel]||0; mkN=d.v==='all'?have:Math.max(1,Math.min(have,mkN+(+d.v))); draw(); };
 ACT.mkbuy=async d=>{ const r=await GAME.act({t:'mk',op:'buy',id:+d.id}); if(!r.err) GAME.toast('Đã mua','item'); loadMarket(); };
-ACT.mkcancel=async d=>{ await GAME.act({t:'mk',op:'cancel',id:+d.id}); loadMarket(); };
-ACT.mksell=async()=>{ const r=await GAME.act({t:'mk',op:'sell',item:$('#mkItem').value,n:+$('#mkN').value,price:+$('#mkP').value}); if(!r.err) GAME.toast('Đã đăng bán','item'); loadMarket(); };
-/* ---------- Chợ đồ cũ (nút bên phải, phím C): xem + mua đồ mọi người đang đăng bán ở bất cứ đâu; đăng bán / gỡ món vẫn ở laptop trong phòng; Shopee Chande là nút riêng ---------- */
+ACT.mkcancel=async d=>{ await GAME.act({t:'mk',op:'cancel',id:+d.id}); loadMarket(); loadMine(); };
+ACT.mksell=async()=>{ if(!mkSel) return; const k=mkSel, n=Math.max(1,Math.floor(mkN)), price=Math.round(mkU*n), r=await GAME.act({t:'mk',op:'sell',item:k,n,price});
+  if(!r.err){ GAME.toast(`Đã đăng bán ${n} ${esc(mkName(k))}: ${fmt(price)}`,'item'); mkN=1; } loadMarket(); loadMine(); };
+inner.addEventListener('input',e=>{ const id=e.target.id; if(id==='mkN') mkN=Math.max(1,Math.min((G().items||{})[mkSel]||1,e.target.value|0)); else if(id==='mkU') mkU=Math.max(0,+e.target.value||0); else return;
+  const s=$('#mkSum'); if(s) s.innerHTML=mkSumTxt(); inner.querySelectorAll('.mkp').forEach(b=>b.classList.toggle('on',+b.dataset.v===mkU)); });
+/* ---------- Chợ đồ cũ (nút bên phải, phím C): mua, đăng bán, gỡ món ở bất cứ đâu; Shopee Chande là nút riêng ---------- */
 let shopQ='', shopSort='new';
-UI.shop=()=>{ open('Chợ đồ cũ',()=>shopHtml(),{wide:true}); loadMarket(); };
+UI.shop=()=>{ open('Chợ đồ cũ',()=>shopHtml(),{wide:true}); loadMarket(); if(shopTab==='sell') loadMine(); };
 /* ---------- Shopee Chande (nút cam riêng ở HUD): thẻ món theo mục, bấm thẻ là mặc thử lên nhân vật, flash sale, giá sau ưu đãi, đồ đã mua + đơn hàng ---------- */
 { const old=ART.icon, IC={sp_helmet:P=>{ P.rect(3,3,8,6,'#e8302a'); P.rect(2,6,10,3,'#c8201a'); P.rect(4,4,3,2,'#ff8a7a'); P.rect(8,7,4,2,'#7fd0ff'); P.rect(3,9,8,1,'#1c1820'); },
+    kqclaw:P=>{ P.rect(3,8,8,5,'#2f8a5a'); P.rect(4,9,6,3,'#4ab878'); P.rect(3,8,8,1,'#6fe0a0'); for(const x of [3,6,9]){ P.rect(x,4,2,4,'#f2c43d'); P.rect(x+1,2,1,2,'#ffd84a'); P.px(x+2,1,'#fff0a0'); P.px(x,7,'#b8862a'); } P.px(5,10,'#f2c43d'); P.px(8,10,'#f2c43d'); P.rect(4,13,6,1,'#1a4a30'); },   /* Vuốt Thần Kim Quy: 3 móng vàng trên gốc ngọc bích */
     lcshard:P=>{ P.rect(6,1,3,12,'#8a6ac8'); P.rect(5,3,5,8,'#a86ae8'); P.rect(4,5,7,4,'#b8a0e8'); P.rect(7,2,1,9,'#f4e8ff'); P.px(3,6,'#f2c43d'); P.px(11,7,'#f2c43d'); P.rect(5,13,5,1,'#5a2a8a'); },
     lcw_rapier:P=>{ P.rect(7,0,2,10,'#e8ecf4'); P.rect(7,0,1,10,'#ffffff'); P.rect(3,10,10,2,'#f2c43d'); P.rect(7,12,2,3,'#8a5a32'); P.px(6,13,'#e8302a'); },
     lcw_aegis:P=>{ P.rect(3,1,10,9,'#f2c43d'); P.rect(4,10,8,2,'#f2c43d'); P.rect(6,12,4,2,'#f2c43d'); P.rect(5,3,6,6,'#e8302a'); P.rect(7,4,2,4,'#ffd84a'); P.rect(3,1,10,1,'#fff0a0'); },
@@ -332,15 +369,7 @@ async function spBuy(k){ const r=await GAME.act({t:'shopee',op:'buy',k}); if(r.e
   const c=SD.CLOTHES[k]; if(c){ await GAME.act({t:'equip',slot:c.slot,id:k}); if(spTry[c.slot]===k) delete spTry[c.slot]; spPv(); } return true; }
 ACT.spbuy=async d=>{ await spBuy(d.k); if(spTab==='mine') spLoad(); UI.refresh(); };
 ACT.spbuyall=async()=>{ for(const k of Object.values(spTry).filter(k=>!G().owned[k])) if(!await spBuy(k)) break; UI.refresh(); };
-function shopHtml(){ const q=shopQ.trim().toLowerCase(), nm=l=>SD.ITEMS[l.item]?SD.ITEMS[l.item].name:l.item, mine=market.filter(l=>l.mine);
-  const L=market.filter(l=>!l.mine&&(!q||nm(l).toLowerCase().includes(q)||String(l.s).toLowerCase().includes(q)));
-  if(shopSort==='cheap') L.sort((a,b)=>a.price-b.price); else if(shopSort==='dear') L.sort((a,b)=>b.price-a.price);
-  const sorts=[['new','Mới đăng'],['cheap','Rẻ nhất'],['dear','Đắt nhất']], each=l=>l.n>1?`<small class="muted">· ${fmt(Math.round(l.price/l.n))}/cái</small>`:'';
-  return money()+`<p class="muted">Chợ đồ cũ: đồ mọi người tự đăng bán lại.</p><div class="form"><input id="shopQ" maxlength="30" value="${esc(shopQ)}" placeholder="Tìm tên món hoặc người bán..." aria-label="Tìm">${btn('shopq','Tìm','','pri')}${shopQ?btn('shopq','Xoá tìm',{clear:1}):''}</div>
-    <div class="tabs">${sorts.map(([k,n])=>`<button class="tab ${k===shopSort?'on':''}" data-a="shopsort" data-k="${k}">${n}</button>`).join('')}</div>
-    <h5>Đang bán (${L.length})</h5><div class="list">${L.map(l=>`<div class="row">${ico(l.item)}<span>${esc(nm(l))} ×${l.n} <small class="muted">của ${esc(l.s)}</small></span><span>${fmt(l.price)} ${each(l)}</span>${btn('mkbuy','Mua',{id:l.id},G().money>=l.price?'pri':'')}</div>`).join('')||`<p class="muted">${q?'Không thấy món nào khớp':'Chưa ai bán gì'}</p>`}</div>
-    ${mine.length?`<h5>Bạn đang bán (${mine.length}/${SD.MARKET.maxListings})</h5><div class="list">${mine.map(l=>`<div class="row">${ico(l.item)}<span>${esc(nm(l))} ×${l.n}</span><span>${fmt(l.price)}</span></div>`).join('')}</div>`:''}
-    <p class="muted">Mua ở đâu cũng được, đồ vào túi ngay. Muốn đăng bán / gỡ món thì mở laptop trong phòng thuê (phí sàn ${SD.MARKET.fee*100}%).</p>`; }
+function shopHtml(){ return mkBody(); }
 ACT.shopq=d=>{ shopQ=d.clear?'':(($('#shopQ')||{}).value||''); draw(); };
 ACT.shopsort=d=>{ shopSort=d.k; draw(); };
 ACT.learn=async d=>{ const r=await GAME.act({t:'learn',skill:d.k}); if(!r.err){ UI.closeAll(); } };

@@ -4,6 +4,14 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-24z',title:'24/10 · Chợ đồ cũ định giá theo độ hiếm · Vuốt Thần Kim Quy · Đổi Trái Ác Quỷ',items:[
+    '💰 Chợ đồ cũ có tab Đăng bán: chọn món trong túi, có 3 mức giá gợi ý (Bán nhanh / Đề xuất / Giá cao), xem trước tiền nhận sau phí sàn. Đăng bán, gỡ món ở đâu cũng được, không cần về phòng',
+    '⭐ Mỗi món có bậc hiếm (Thường, Khá, Hiếm, Sử thi, Huyền thoại) tính theo số người đang giữ, số đang bán trên chợ và giá vừa bán 7 ngày qua. Tab Mua có nhãn Rẻ / Đắt so với giá thị trường, xếp theo Hời nhất / Hiếm nhất',
+    '🔨 Cường hoá còn tăng chính các chỉ số nổi bật của món (chí mạng, công, tốc đánh của set legacy / vũ khí / phụ kiện): mỗi cấp +5%, +12 là ×1,6',
+    '🐢 Tẩy tuỷ ở Phù Thuỷ Cường Hoá: món +12 hoá thành Vuốt Thần Kim Quy (món về +0). Gắn vuốt vào món +12 khác: đánh thường bắn lan (Tiên Nữ, Phù Thuỷ) hoặc chém lan (Chiến Binh, Đại Tượng), đánh xa hơn, 1% gọi Rồng Thần',
+    '🍇 Vệ binh MU xoá được Trái Ác Quỷ đang ăn (5.000.000đ, trái cũ mất) để ăn trái khác',
+    '★ Thanh trên cùng báo Mèn Mén, Blacknut đang ở đâu, còn bao lâu, chỗ sắp ghé; bấm vào xem tác dụng chỉ số và Grab tới. Poke Deck ghi rõ tác dụng của 2 con',
+    '🐱 Sửa lỗi Blacknut bỏ lượt khoảng một nửa số lần: giờ 40 giây nào cũng ghé 1 nơi làm việc']},
   {v:'2026-10-24y',title:'24/10 (sửa lỗi)',items:['Mọi người đã thấy Lính Cát đầu đội của nhau đi theo chủ (cả dạng Huyền Thoại Lv50 có vòng aura, Mèn Mén có dòng Huyền Thoại / Motion). Trước đây ai cũng chỉ thấy con của mình']},
   {v:'2026-10-24x',title:'24/10 · Poker, Ma sói mới · Nhà giải trí ở mọi map',items:[
     '🎲 Map nào cũng có Nhà giải trí (Đà Lạt, MU, Ngoại Hạng Anh, Miếu, DAS, Bearplus, Lavi, VNPT, Lumen, Everfit, 120 Yên Lãng, Nghiện Motion, Pickleball): vào chung 1 nhà, ra cửa là về đúng map đã vào',
