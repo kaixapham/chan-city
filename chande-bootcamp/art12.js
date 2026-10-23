@@ -7,7 +7,24 @@ TE['9']=(g,X,Y,tx,ty,nb,fr,P)=>{ P.rect(X,Y,T,T,'#9a9488'); const o=ty%2?8:0; P.
 TE['0']=(g,X,Y,tx,ty,nb,fr,P)=>{ const below=nb(0,1); P.rect(X,Y,T,T,'#6a665e'); for(let r=0;r<T;r+=5){ P.rect(X,Y+r,T,1,'#4a4640'); const o=((r/5+tx)%2)*8; P.rect(X+o,Y+r,1,5,'#4a4640'); }
   if(below&&below!=='0'){ P.rect(X,Y+12,T,4,'#3a3630'); if(tx%3===0){ P.rect(X+5,Y+2,6,8,'#2a2622'); P.rect(X+6,Y+3,4,6,'#1a1612'); } } };
 A.muFountain=(fr=0)=>S(64,44,32,40,(g,P)=>{ ell(P,32,32,30,10,'#8a847a'); ell(P,32,31,27,8,'#5a9ad8'); for(let i=0;i<6;i++) P.rect(10+i*8+((fr+i)%2)*2,29+(i%2),4,1,'#bfe8ff');
-  P.rect(28,12,8,18,'#a8a296'); P.rect(26,10,12,3,'#c8c2b6'); ell(P,32,8,9,3,'#8a847a'); P.rect(31,0,2,8,'#bfe8ff'); for(const [dx,dy] of [[-6,4],[6,4],[-9,9],[9,9]]) P.px(32+dx,dy+((fr+dx)%2),'#e8f8ff'); });
+  for(const [x0,d] of [[8,1],[56,-1],[16,1],[48,-1]]) for(let i=0;i<7;i++){ const x=x0+d*i*1.4, y=27-Math.round(Math.sin(i/6*Math.PI)*5)-((fr+i)%2&&i%3===1?1:0); P.px(Math.round(x),y,i%2?'#bfe8ff':'#e8f8ff'); }   /* tia nước từ thành bể phun vào bệ tượng (tượng Sandra Vũ đứng giữa, A.sandraStatue) */
+  for(const dx of [-5,5]) P.px(32+dx,27+(fr%2),'#ffffff'); });
+// tượng Sandra Vũ giữa đài phun nước quảng trường MU: bệ cẩm thạch + biển tên vàng, tóc đen gợn sóng ngang vai rẽ ngôi lệch, áo kẻ caro xám không tay, quần sẫm, khuyên tai vàng, cười nhẹ
+A.sandraStatue=()=>S(40,76,20,74,(g,P)=>{ const SK='#e6ad86', SD='#c4875e', HR='#1a161c', HL='#3a3442', PL='#8e8e96', PD='#64646c', PH='#b8b8c0', TR='#34303a';
+  P.rect(3,68,34,6,'#8a8478'); P.rect(3,68,34,1,'#b0aa9c'); P.rect(6,55,28,13,'#dcd6ca'); P.rect(28,55,6,13,'#bcb6aa'); P.rect(6,55,28,1,'#f2ece0'); P.rect(4,52,32,3,'#ece6da'); P.rect(4,54,32,1,'#c0baae');   /* bệ */
+  P.rect(11,58,18,6,'#a8782a'); P.rect(12,59,16,4,'#e8b83a'); for(const x of [14,16,17,19,21,22,24,26]) P.px(x,61,'#6a4612'); P.px(13,59,'#fff0a0');   /* biển tên vàng */
+  P.rect(14,49,5,3,'#2a2228'); P.rect(21,49,5,3,'#2a2228'); P.rect(15,38,4,11,TR); P.rect(21,38,4,11,TR); P.rect(15,38,1,11,'#4a4652'); P.rect(21,38,1,11,'#4a4652');   /* giày, quần */
+  P.rect(13,23,14,16,PL); for(let x=14;x<27;x+=3) P.rect(x,23,1,16,PD); for(let y=25;y<39;y+=3) P.rect(13,y,14,1,PH); for(let x=14;x<27;x+=3) for(let y=25;y<39;y+=3) P.px(x,y,'#5a5a62');   /* áo caro xám */
+  P.rect(12,36,16,3,PL); P.rect(12,38,16,1,PD); P.rect(17,23,6,2,SK); P.rect(18,25,4,1,SK); P.px(19,26,SK); P.px(20,26,SK);   /* vạt áo, cổ chữ V */
+  P.rect(10,24,3,13,SK); P.rect(27,24,3,13,SK); P.rect(12,24,1,13,SD); P.rect(27,24,1,13,SD); P.rect(10,37,3,2,'#eebc98'); P.rect(27,37,3,2,'#eebc98');   /* tay trần */
+  P.rect(18,19,5,4,SK); P.rect(18,21,5,1,SD);   /* cổ */
+  P.rect(14,9,12,11,SK); P.rect(15,19,10,1,SK); P.rect(24,10,2,9,SD);   /* mặt */
+  P.rect(16,13,2,1,'#2a1a18'); P.rect(21,13,2,1,'#2a1a18'); P.px(17,12,'#3a2620'); P.px(22,12,'#3a2620'); P.px(16,12,HR); P.px(23,12,HR);   /* mắt, lông mày */
+  P.px(20,15,SD); P.rect(18,17,4,1,'#b85a52'); P.px(17,16,'#b85a52'); P.px(22,16,'#b85a52'); P.px(16,15,'#eaa090'); P.px(23,15,'#eaa090');   /* mũi, miệng cười, má hồng */
+  P.rect(13,5,14,4,HR); P.rect(12,7,3,5,HR); P.rect(14,8,7,2,HR); P.rect(15,10,4,1,HR); P.rect(25,8,3,4,HR);   /* đỉnh tóc, mái rẽ lệch */
+  P.rect(11,11,4,13,HR); P.rect(10,15,2,4,HR); P.rect(9,19,3,5,HR); P.rect(10,24,4,2,HR); P.rect(26,11,4,12,HR); P.rect(28,15,2,4,HR); P.rect(28,19,3,5,HR); P.rect(26,23,4,2,HR);   /* tóc gợn sóng ngang vai */
+  for(const [x,y] of [[16,6],[19,5],[22,6],[12,13],[10,20],[27,13],[29,20]]) P.px(x,y,HL); P.px(25,16,'#e8c050'); P.px(25,17,'#e8c050');   /* ánh tóc, khuyên tai vàng */
+  P.px(5,53,'#ffffff'); P.px(33,56,'#ffffff'); });
 A.muAltar=(fr=0)=>S(96,52,48,40,(g,P)=>{ ell(P,48,36,46,14,'#3a3036'); ell(P,48,36,40,11,fr%2?'#c8302a':'#a8201e'); ell(P,48,36,36,9,'#2a2026'); for(let i=0;i<12;i++){ const a=i/12*Math.PI*2; P.rect(Math.round(48+Math.cos(a)*38)-1,Math.round(36+Math.sin(a)*10),3,2,fr%2?'#ff7a5a':'#ff4a3a'); }
   P.rect(40,8,16,24,'#4a4048'); P.rect(38,6,20,3,'#6a6068'); P.rect(44,14,8,8,fr%2?'#ff4a3a':'#c8302a'); P.rect(46,16,4,4,'#ffd84a'); });
 A.muTorch=(fr=0)=>S(14,40,7,38,(g,P)=>{ P.rect(5,12,4,26,'#5a5048'); P.rect(3,10,8,3,'#8a8078'); P.rect(4,4,6,6,'#ff7a2a'); P.rect(5,1+(fr%2),4,5,'#ffd84a'); P.px(6,0+(fr%2),'#fff3b0'); P.rect(3,36,8,2,'#3a3630'); });

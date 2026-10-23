@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25a',title:'25/10 · Tượng Sandra Vũ ở quảng trường MU',items:['🗽 Giữa đài phun nước quảng trường Lục Địa Cát (MU) có tượng Sandra Vũ trên bệ cẩm thạch, biển tên vàng, nước phun quanh bệ']},
   {v:'2026-10-24zb',title:'24/10 · Phù Thuỷ Bóng Tối mạnh hơn, phép nổ lan',items:[
     '🔮 Phù Thuỷ Bóng Tối: máu 95 → 230, thủ 6 → 12, công 25 → 30, mana 130 → 170, sẵn +25% sức mạnh phép',
     '✨ Đánh thường là cầu phép bay xa 7 ô (trước 2,3 ô), tính cả sức mạnh phép, nổ lan 2,2 ô',

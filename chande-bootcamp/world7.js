@@ -25,6 +25,7 @@ function buildOld(){ const M=SD.MU.local, W=M.W, H=M.H, H0=M.town, Z=M.zones, K=
   const al=M.altar; put(A.muAltar(0),al.x,al.y+2.5,{flat:true,anim:'mualtar'});
   for(const [x,y] of [[13,4],[31,4],[13,11],[31,11]]){ put(A.muTorch(0),x,y,{anim:'mutorch'}); block(Math.floor(x),Math.floor(y)-1,Math.floor(x),Math.floor(y)-1); }
   put(A.muFountain(0),M.fountain.x,M.fountain.y,{anim:'mufount'}); block(20,13,23,15);
+  put(A.sandraStatue(),M.fountain.x,M.fountain.y-.45,{sort:(M.fountain.y+.05)*T}); put(A.label('SANDRA VU','#2a2026','#ffd84a'),M.fountain.x,M.fountain.y+1.25,{flat:true});   /* tượng Sandra Vũ giữa đài phun nước */
   [['#c8302a',9],['#f2c43d',22],['#3a6ad8',35]].forEach(([c,x])=>put(A.muBanner(c),x,3.2,{flat:true}));
   put(A.muStall(),30.6,19.2); block(29,17,32,18);
   put(A.muPremium(),11.5,19.4); block(10,17,13,18);
