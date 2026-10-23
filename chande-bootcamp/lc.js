@@ -168,6 +168,9 @@ const p0=X.pick; X.pick=x=>{ if(x.k==='lcaltar') return UI.lcAltar(); if(x.k==='
 const a0=X.anim; X.anim=(o,clock)=>{ const a=o.anim;
   if(a==='lcheal'){ const f=Math.floor(clock*2)%7; return SPR['h'+f]||(SPR['h'+f]=A.healMachine(f)); } if(a==='lcpc'){ const f=Math.floor(clock*2)%2; return SPR['p'+f]||(SPR['p'+f]=A.pcBox(f)); } return a0(o,clock); }; const SPR={};
 let FOL=null, lastClock=0;
+// Lính Cát đầu đội của người chơi khác (tin 'pj' có lc: 'loài' hoặc 'loài*' = dạng Lv50), đi theo sau họ như con của mình
+const RFOL=new Map(), HIDE=SD.FL.kayak|SD.FL.moto|SD.FL.car|SD.FL.incar|SD.FL.optimus|SD.FL.otruck;
+NET.listen('pj',m=>{ const r=GAME.REM&&GAME.REM.get(m.id); if(r) r.lc=m.lc||''; });
 const d0=X.draw; X.draw=(list,ctx)=>{ d0(list,ctx); const S=GAME.S, P=GAME.P; if(!S||!P) return; const cam=GAME.cam, clock=GAME.clock, dt=Math.min(.1,Math.max(0,clock-lastClock)); lastClock=clock;
   if(L.maps[S.kind]){ const vx=cam.x-40, vy=cam.y-40, vw=innerWidth+80, vh=innerHeight+80, inV=(x,y)=>x>vx&&y>vy&&x<vx+vw&&y<vy+vh;
     for(const w of wildNow()){ const x=w.x*T, y=w.y*T; if(!inV(x,y)) continue; const fr=Math.floor(clock*2+w.i)%2, sp=A.linhcat(w.sp,fr,Math.sin(clock*.5+w.i)>0);
@@ -178,6 +181,12 @@ const d0=X.draw; X.draw=(list,ctx)=>{ d0(list,ctx); const S=GAME.S, P=GAME.P; if
       list.push({y:y+200,d:()=>{ const X0=Math.round(x-cam.x), Y0=Math.round(y-cam.y+bob); const gr=ctx.createRadialGradient(X0,Y0,4,X0,Y0,34); gr.addColorStop(0,`rgba(255,216,74,${.55*pul+.2})`); gr.addColorStop(1,'rgba(255,216,74,0)'); ctx.fillStyle=gr; ctx.fillRect(X0-36,Y0-36,72,72);
         ctx.save(); ctx.imageSmoothingEnabled=false; ctx.drawImage(ball.c,X0-14,Y0-14,28,28); ctx.restore(); }}); } }
     if(S.kind==='retreat') L.farm.forEach((f,i)=>{ const [fx,fy]=farmPos(f,i,clock), x=fx*T, y=fy*T; if(!inV(x,y)) return; const sp=A.linhcat(f[2],Math.floor(clock*2+i)%2,Math.cos(clock*.4+i*2)>0); list.push({y,d:()=>{ GAME.shadow(x,y,9); ctx.drawImage(sp.c,Math.round(x-sp.ax-cam.x),Math.round(y-sp.ay-cam.y)); }}); }); }
+  // Lính Cát của người khác cùng map
+  if(!['phongbay','track','deo'].includes(S.kind)) for(const r of (GAME.REM||new Map()).values()){ const code=r.lc; if(!code||r.scene&&r.scene!==S.kind||(r.fl&HIDE)){ RFOL.delete(r.id); continue; }
+    const sp=code.replace('*',''), asc=code.endsWith('*'); if(!SP[sp]) continue; const tx=r.x-(r.face||1)*(asc?25:20), ty=r.y+3; let f=RFOL.get(r.id);
+    if(!f||f.sp!==sp||Math.hypot(f.x-tx,f.y-ty)>200) RFOL.set(r.id,f={sp,x:tx,y:ty,face:1}); f.asc=asc; const dx=tx-f.x, dy=ty-f.y, dd=Math.hypot(dx,dy); if(dd>4){ const k=Math.min(1,dt*5); f.x+=dx*k; f.y+=dy*k; if(Math.abs(dx)>1) f.face=dx>0?1:-1; }
+    const mv=dd>6, fr=Math.floor(clock*(mv?6:2)+r.id%3)%2, spr=(asc?A.linhcatAsc:A.linhcat)(sp,fr,f.face>0), fx=f.x, fy=f.y; if(fx<cam.x-60||fy<cam.y-60||fx>cam.x+innerWidth+60||fy>cam.y+innerHeight+60) continue;
+    list.push({y:fy,d:()=>{ if(asc) A.lcAura(ctx,Math.round(fx-cam.x),Math.round(fy-cam.y),clock,15); else GAME.shadow(fx,fy,7); ctx.drawImage(asc?A.lcHolo(spr,clock):spr.c,Math.round(fx-spr.ax-cam.x),Math.round(fy-spr.ay-cam.y-(mv&&fr?1:0))); }}); }
   // con đầu đội đi theo người, cả khi cưỡi ngựa / thần thú (chạy sau đuôi ngựa); không theo khi đi xe / chèo kayak / đua ngựa / bốc đầu ở đèo
   const lead=(lc().party||[])[0]; if(!lead||lead.hp<=0||P.kayak||P.moto||P.incar||P.pcar||P.opt||['phongbay','track','deo'].includes(S.kind)){ FOL=null; return; }
   const tx=P.x-(P.face||1)*(P.riding?34:lead.asc?25:20), ty=P.y+3; if(!FOL||FOL.sp!==lead.sp||FOL.scene!==S.kind||Math.hypot(FOL.x-tx,FOL.y-ty)>200) FOL={sp:lead.sp,x:tx,y:ty,scene:S.kind,face:1};
@@ -198,7 +207,8 @@ function menTag(ug,x,y){ const t='Huyền Thoại / Motion', w=ug.measureText(t)
   ug.fillStyle=gr; ug.fillRect(X0,y-16,w,16); ug.fillStyle='#f2c43d'; ug.fillRect(X0,y-16,w,1); ug.fillRect(X0,y-1,w,1); ug.fillStyle='#ffe08a'; ug.fillText(t,x,y-2); }
 const o0=X.overlay; X.overlay=(ug,sx,sy,tag)=>{ if(o0) o0(ug,sx,sy,tag); const S=GAME.S, P=GAME.P; if(!S||!P||BT) return; ug.font='14px VT323, monospace'; ug.textAlign='center'; ug.textBaseline='bottom';
   for(const w of (S.kind===wildScene?WILD:[])){ const x=w.x*T, y=w.y*T; if(Math.hypot(P.x-x,P.y-y)>80) continue; const X0=sx(x), Y0=sy(y-30); tag(X0,Y0,`Lv${w.lv} ${SP[w.sp].name}`,'',SP[w.sp].night?'#c8a0ff':'#ffd84a'); typeTags(ug,X0,Y0-18,w.sp); if(w.men) menTag(ug,X0,Y0-36); if(w.bn) bnTalk(ug,X0,Y0-36,w); }
-  if(FOL&&SP[FOL.sp]&&SP[FOL.sp].men&&FOL.scene===S.kind) menTag(ug,sx(FOL.x),sy(FOL.y-38)); };
+  if(FOL&&SP[FOL.sp]&&SP[FOL.sp].men&&FOL.scene===S.kind) menTag(ug,sx(FOL.x),sy(FOL.y-38));
+  for(const f of RFOL.values()) if(SP[f.sp]&&SP[f.sp].men) menTag(ug,sx(f.x),sy(f.y-38)); };
 // nhãn hệ (màu theo hệ, loài 2 hệ có 2 nhãn) vẽ ngay trên tên con hoang
 function typeTags(ug,x,y,sp){ const ts=[SP[sp].t,SP[sp].t2].filter(Boolean), ws=ts.map(t=>ug.measureText(TY[t].name).width+8), tot=ws.reduce((a,v)=>a+v,0)+(ts.length-1)*3; let cx=Math.round(x-tot/2);
   ug.textAlign='left'; ts.forEach((t,i)=>{ ug.fillStyle=TY[t].col; ug.fillRect(cx,y-15,ws[i],15); ug.fillStyle='rgba(0,0,0,.25)'; ug.fillRect(cx,y-1,ws[i],1); ug.fillStyle='#120c16'; ug.fillText(TY[t].name,cx+4,y-1); cx+=ws[i]+3; }); ug.textAlign='center'; }
