@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25j',title:'25/10 · Cái Pod của Kaixa dễ hơn',items:['💜 Nhiệm vụ ghép Cái Pod của Kaixa dễ đi 5 lần: nhân viên Ké 2 ngày, Poker ăn 2 triệu, nộp phạt 2 triệu, bị CSGT dừng 2 lần, trồng 10 cây, 4 lợn con, 8 lứa vịt, bán 6 con bướm, bán 1 triệu tiền rau, cướp 4 bó rau, thắng đua ngựa 1 lần','🏴‍☠️ Nhiệm vụ hạ Luffy Gear 5 (Airpod của VNPT) chỉ còn 50 lần (trước 200). Ai đã làm đủ số mới thì tự được tính xong']},
   {v:'2026-10-25i',title:'25/10 (sửa lỗi) · Nhà giải trí',items:['🎲 Sửa Nhà giải trí ở các map ngoài Ké (Đà Lạt, MU, Ngoại Hạng Anh, Miếu, DAS, Bearplus, Lavi, VNPT, Lumen, Everfit, 120 Yên Lãng, Nghiện Motion, Pickleball) đứng trước cửa không hiện nút vào: giờ bấm E là vào']},
   {v:'2026-10-25h',title:'25/10 (sửa lỗi) · Khô gà',items:['🐔 Sửa 3 gói khô gà nằm trong nhà hoặc bị đồ che không nhặt được (1 gói ở Ké, 2 gói ở Đà Lạt): đã dời ra chỗ trống đi tới được. Gói nào đã nhặt vẫn tính']},
   {v:'2026-10-25g',title:'25/10 · CLB Lính Cát trên bản đồ Ké',items:['🗺 Minimap và bản đồ lớn ở Ké hiện 15 CLB Lính Cát bằng Bóng Cát: võ đài đỏ (đã có huy hiệu thì vàng), CLB luyện tập xanh. Bấm vào là tự đi tới gặp HLV']},

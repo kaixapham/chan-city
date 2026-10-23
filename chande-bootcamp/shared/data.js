@@ -2730,6 +2730,10 @@ Object.assign(MU.cls.dw,{hp:230,mp:170,atk:30,def:12,regen:1.4,reach:7,armor:.05
 MU.sock={fee:3000000};
 /* cường hoá Trái Ác Quỷ đang ăn bằng Ngọc Cường Hoá (Phù Thuỷ Cường Hoá, cùng phí / tỉ lệ như khắc lỗ, tối đa +12): mỗi cấp chiêu trái mạnh thêm 7% (sát thương / hồi máu) và chỉ số của trái +7%; xoá trái là mất cấp */
 ENH.fruit={per:.07}; const fruitMul=L=>1+(L||0)*ENH.fruit.per;
+/* Cái Pod của Kaixa dễ đi 5 lần (25/10, chủ game yêu cầu): mọi việc đếm số lần / số tiền chỉ cần 1/5 (làm tròn lên); riêng việc hạ Luffy Gear 5 (Airpod của VNPT) còn 50 lần */
+{ const TS=Array.isArray(LEGEND.tasks)?LEGEND.tasks:Object.values(LEGEND.tasks), lb=(t,v)=>t.money?`${v/1e6} triệu`:String(v);
+  for(const t of TS) if(t.it==='pod'&&t.t==='ach'&&t.need>1){ const n=t.money?Math.ceil(t.need/5/1e6)*1e6:Math.max(1,Math.ceil(t.need/5)); t.label=t.label.replace(lb(t,t.need),lb(t,n)); t.need=n; }
+  const lf=TS.find(t=>t.st==='luffy'); if(lf){ lf.label=lf.label.replace(String(lf.need),'50'); lf.need=50; } }
 /* đồ trang trí nhà rẻ đi 20 lần (25/10, chủ game yêu cầu): nội thất, sàn, tường (làm tròn 500đ); giá mở rộng nhà giữ nguyên; bán lại vẫn được HOME.sellBack giá mới */
 for(const src of [HOME.items,HOME.floors,HOME.walls]) for(const d of Object.values(src)) if(d.price>0) d.price=Math.max(500,Math.round(d.price/20/500)*500);
 /* giảm máu mọi boss 40% (24/10, chủ game yêu cầu), trừ Pepe: mọi boss MU (cả 5 anh em Siêu Nhân, Megazord, Đỉnh Bắc), MCK ở Ké, Megatron. Máu đổi dạng (hpMul) vẫn tính theo máu mới */
