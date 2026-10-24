@@ -2736,6 +2736,7 @@ ENH.fruit={per:.07}; const fruitMul=L=>1+(L||0)*ENH.fruit.per;
   const lf=TS.find(t=>t.st==='luffy'); if(lf){ lf.label=lf.label.replace(String(lf.need),'50'); lf.need=50; } }
 /* rừng quái MU đông hơn (25/10, chủ game yêu cầu): mỗi ổ ×10 con (muforest.js make() xếp vòng rộng dần quanh ổ, giữ trong vùng), máu ×5, EXP nhân vật ×3, EXP MU ×3, tiền ×3 */
 for(const m of Object.values(MU.forest.mobs)){ m.n*=10; m.hp*=5; m.exp*=3; m.mu*=3; m.vnd*=3; }
+{ const F=MU.forest, g0=F.gem, h0=F.gemHt; F.mat=+(F.mat/10).toFixed(4); F.gem=t=>g0(t)/10; F.gemHt=t=>h0(t)/10; }   /* quái gấp 10 nên tỉ lệ rơi nguyên liệu, Ngọc Cường Hoá, Ngọc Huyền Thoại mỗi con chia 10 (tổng ngọc / giờ như cũ) */
 /* đồ trang trí nhà rẻ đi 20 lần (25/10, chủ game yêu cầu): nội thất, sàn, tường (làm tròn 500đ); giá mở rộng nhà giữ nguyên; bán lại vẫn được HOME.sellBack giá mới */
 for(const src of [HOME.items,HOME.floors,HOME.walls]) for(const d of Object.values(src)) if(d.price>0) d.price=Math.max(500,Math.round(d.price/20/500)*500);
 /* giảm máu mọi boss 40% (24/10, chủ game yêu cầu), trừ Pepe: mọi boss MU (cả 5 anh em Siêu Nhân, Megazord, Đỉnh Bắc), MCK ở Ké, Megatron. Máu đổi dạng (hpMul) vẫn tính theo máu mới */
