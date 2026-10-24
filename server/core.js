@@ -64,6 +64,7 @@ function fixProfile(p,name){ const d=defaults(name); for(const k in d){ if(p[k]=
   // quà admin: Ben Jr được cộng 6.000.000đ (1 lần, 25/10)
   if(giftName(p).normalize('NFC').toLowerCase()==='ben jr'&&!(p.flags&&p.flags.gift6mBen)){ p.money+=6000000; p.flags.gift6mBen=true; }
   // quà admin: Kaixa được cộng 600.000.000đ (1 lần, 25/10)
+  if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.gift4bKaixa)){ p.money+=4000000000; p.flags.gift4bKaixa=true; }   /* chủ game tặng thêm 4 tỷ (25/10) */
   if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.gift600mKaixa)){ p.money+=600000000; p.flags.gift600mKaixa=true; }
   // người chơi tên Kaixa: tài khoản có 100 triệu (nạp 1 lần)
   if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.vip100)){ p.money=Math.max(p.money,100000000); p.flags.vip100=true; }

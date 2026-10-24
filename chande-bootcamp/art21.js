@@ -139,10 +139,13 @@ const OFFD={
     V.rect(9,22,9,2,'#c8a23a'); V.tube([[13,24],[13,29]],1.4,R('#c8302a'),{g:'hilt'}); V.ell(17,25,3,2.4,R('#f4f2ec'),{g:'fur',lift:.2}); V.ell(19,27,2,1.6,R('#f4f2ec'),{g:'fur2',lift:.2}); },
   kh_musk:V=>{ V.tube([[13,4],[13,18]],[5,6],R('#c8ccd8'),{g:'body'}); V.poly([[7,18],[19,18],[22,24],[4,24]],R('#8a8e9a'),{n:[0,-.3,.95],g:'nozzle'}); V.rect(9,8,8,2,'#1c1516'); V.rect(10,12,6,1,'#e8302a');   /* động cơ tên lửa bạc, lửa xanh phụt dưới */
     V.ell(13,26,6,3,[[230,250,255,255],[120,210,255,255],[50,140,255,255],[20,70,200,255]],{g:'flame',lift:.4}); V.px(11,28,'#ffffff').px(15,28,'#bff0ff'); V.ell(13,4,3,2,R('#e8ecf4'),{g:'tip'}); },
+  kh_tamdo:V=>{ V.tube([[13,29],[13,20]],[4.4,5],R('#d49a72'),{g:'wrist'}); V.ell(13,13,9.5,8.5,R('#e8b088'),{g:'fist',lift:.15});   /* Nắm Đấm Tâm Đỗ: nắm tay da người, 4 đốt ngón trên, ngón cái vắt ngang, hào quang vàng */
+    for(const x of [6,10.5,15,19.5]) V.ell(x,7,2.6,2.3,R('#f0c098'),{g:'k'+x,lift:.25}); V.line(5,10,22,10,'#b07a56'); for(const x of [8,13,17]) V.line(x,8,x,13,'#c08a62');
+    V.tube([[5,16],[17,14]],[2.6,2.1],R('#f2c6a0'),{g:'thumb'}); V.ell(17.5,14,1.8,1.3,R('#fae2d2'),{g:'nail',lift:.3}); V.px(9,6,'#ffffff').px(13,6,'#ffffff'); },
   kh_howard:V=>{ V.tube([[8,28],[17,9]],[1.3,1.1],R('#3a2a4a'),{g:'stick'}); V.rect(12,18,3,2,'#c8a23a');   /* đũa phép: thân tím đậm, đầu sao tím vàng, lấp lánh */
     V.poly([[18,1],[20,6],[25,6],[21,9],[23,14],[18,11],[13,14],[15,9],[11,6],[16,6]],R('#b070ff'),{n:[0,-.2,.98],g:'star'}); V.px(18,7,'#ffffff').px(17,6,'#ffe066');
     for(const [x,y] of [[6,4],[24,18],[4,14]]) { V.px(x,y,'#ffffff'); V.px(x-1,y,'#e8d0ff'); V.px(x+1,y,'#e8d0ff'); } } };
-A.muOff=(k,big)=>{ if(k==='kh_hachoang'||!OFFD[k]) return A.muShield(k,big); return SHIELD[k+!!big]||(SHIELD[k+!!big]=(()=>{ const V=vol(26,30); OFFD[k](V); const c=V.done(false,{glow:k==='kh_howard'?'rgba(180,120,255,.35)':k==='kh_thor'?'rgba(120,200,255,.3)':undefined,gr:1});
+A.muOff=(k,big)=>{ if(k==='kh_hachoang'||!OFFD[k]) return A.muShield(k,big); return SHIELD[k+!!big]||(SHIELD[k+!!big]=(()=>{ const V=vol(26,30); OFFD[k](V); const c=V.done(false,{glow:k==='kh_tamdo'?'rgba(255,200,80,.45)':k==='kh_howard'?'rgba(180,120,255,.35)':k==='kh_thor'?'rgba(120,200,255,.3)':undefined,gr:1});
   if(big) return {c,ax:13,ay:28}; const sm=A.cv(13,15), g=sm.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(c,0,0,13,15); return {c:sm,ax:6,ay:14}; })()); };
 
 const C21={}, old=A.muBossSprite, oldAnim=A.bossAnim;

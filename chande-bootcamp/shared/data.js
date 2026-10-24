@@ -2748,6 +2748,13 @@ MU.guns={
   vw_gun_aztec:{name:'Súng Ngắm Thần Mặt Trời',el:'thunder',star:5,price:220000000,atk:.75,reach:5,bonus:{crit:.15,shred:.25},col:'#3ae8d8',desc:'Súng ngắm hoa văn cổ vàng ngọc: bắn rất xa, xuyên giáp'},
   vw_gun_chande:{name:'Minigun Huyền Thoại Chande',el:'fire',star:5,price:300000000,atk:.8,reach:3.5,legend:1,spray:{n:10,r:4,k:.4},aspdSet:16,bonus:{crit:.08},col:'#ff3a2a',desc:'HUYỀN THOẠI · 6 nòng xoay đầu lâu đỏ: bắn liên tục 16 phát / giây, mỗi phát toả 10 tia đạn'}};
 for(const [k,g] of Object.entries(MU.guns)){ MU.weapons[k]={...g,type:'gun',gk:k.slice(7),store:true,gun:1}; ITEMS[k]={name:g.name,icon:'wpn_'+k.slice(3)}; }
+/* Món huyền thoại ở mục Súng của Thợ Rèn (25/10, chủ game yêu cầu): Áo Mikenco của Hữu Pháp (1 tỷ, mặc vào ở MU thì bất tử: quái, boss, độc không trừ máu; thách đấu vẫn tính) và
+   Nắm Đấm Của Tâm Đỗ (500 triệu, ô tay trái nên đeo cùng súng được: công +500%, đòn chí mạng gây 300% sát thương thay vì 150%) */
+CLOTHES.ao_mikenco={name:'Áo Mikenco của Hữu Pháp',slot:'top',price:0,hidden:true,opts:{vstripe:true},colors:{top:'f6efe2',print:'c8643a'}};
+MU.mikenco={k:'ao_mikenco',price:1000000000,desc:'Sơ mi lụa kem viền sọc cam nâu, in xích vàng, bánh lái và vương miện. Mặc vào ở MU là bất tử: quái, boss, độc không làm mất máu'};
+MU.leg={xam:{name:'Vết Xăm Kaixa Hắc Ám',price:1500000000,ghosts:12,gr:2.2,every:600,desc:'HUYỀN THOẠI · hình xăm bật lửa nở hoa trên tay. Xăm vào: 12 bóng ma xoay quanh chủ, mỗi bóng tự đánh quái và boss gần nó, tầm đánh và sát thương như đòn đánh thường của chủ'},
+  linh:{name:'Quần Lót Ren Của Trần Hà Linh',price:2000000000,hp:3,def:3,desc:'HUYỀN THOẠI · quần lót ren đen thêu hoa hồng. Mặc vào ở MU: máu tối đa ×3, phòng thủ ×3'}};   /* 2 món huyền thoại cuối (25/10, chủ game yêu cầu); bật/tắt riêng, không chiếm ô đồ */
+MU.acc.kh_tamdo={slot:'shield',name:'Nắm Đấm Của Tâm Đỗ',price:500000000,bonus:{atk:5},critX:3,legend:1,desc:'HUYỀN THOẠI · nắm đấm của Tâm Đỗ: công +500%, đòn chí mạng gây 300% sát thương'};
 /* Trái Ác Quỷ (25/10, chủ game yêu cầu): thêm 10 trái (đủ 16) + cân bằng cả 16 theo 1 thước: chiêu đánh 1 mục tiêu ≈ 0,33 lần công / giây hồi chiêu, chiêu lan hoặc có khống chế (chậm, choáng, hút máu, giảm hồi máu) thấp hơn,
    chiêu hồi máu cho đội; chỉ số trái tổng ~16–20%. fx: kiểu hiệu ứng client của trái mới (maps8 ffxStep: beam tia, burst cầu nổ, aoe nổ lan, heal hồi máu) */
 { const NF={

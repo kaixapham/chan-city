@@ -88,6 +88,7 @@ NET.listen('mufx',e=>{ if(!here()||e.k.startsWith('mob')||e.k==='lcsk') return; 
   if(e.k==='pchain'){ ZAPS.push({x:e.x*T,y:e.y*T-14,pts:e.pts.map(([x,y])=>[x*T,y*T-14]),t}); for(const [x,y,d] of e.pts) NUM.push({x:x*T+rnd(-6,6),y:y*T-24,v:d,t}); GAME.sfx('power_up',.12); return; }   /* giật sét lan */
   if(e.k==='pslow'){ burst(e.x*T,e.y*T-14,10,{col:C_ICE,kind:'spark',sp:[30,80],life:[.3,.6]}); return; }
   if(e.k==='pstun'){ if(!e.boss) STUNS.push({x:e.x*T,y:e.y*T,t,end:t+e.dur*1000}); burst(e.x*T,e.y*T-24,12,{col:['#ffe066','#ffffff'],kind:'star',sp:[30,80],life:[.3,.6]}); GAME.sfx('poof',.3); return; }   /* choáng: sao xoay trên đầu (boss vẽ theo B.stun) */
+  if(e.k==='ghost'){ const p=posOf(e.from); if(p) for(const [i,x,y,d,cr] of e.pts){ const [gx,gy]=ghPos(p[0],p[1],i); TRC.push({x0:gx,y0:gy-16,x1:x*T+rnd(-3,3),y1:y*T-14+rnd(-3,3),t,col:i%2?'#b060ff':'#3a1a5a'}); burst(x*T,y*T-14,4,{col:C_DARK,kind:'spark',sp:[30,90],life:[.15,.35]}); NUM.push({x:x*T+rnd(-8,8),y:y*T-24,v:d,crit:cr,t}); } return; }   /* Vết Xăm: 12 bóng ma lao vào đánh */
   if(e.k==='gunspray'){ const p=posOf(e.from); if(p){ const x0=p[0], y0=p[1]-18, tx=e.x*T, ty=e.y*T-14; for(let i=0;i<e.n;i++){ const q=e.pts[i-1]; TRC.push({x0,y0,x1:q?q[0]*T+rnd(-3,3):tx+rnd(-34,34),y1:q?q[1]*T-14+rnd(-3,3):ty+rnd(-22,22),t:t+i*12,col:i%2?'#ffd84a':'#ff6a3a'}); }
       for(const [x,y,d] of e.pts){ burst(x*T,y*T-14,6,{col:C_FIRE,kind:'spark',sp:[40,120],life:[.15,.3]}); NUM.push({x:x*T+rnd(-6,6),y:y*T-24,v:d,t}); } } return; }   /* Minigun Chande: toả 10 tia đạn */
   if(e.k==='kqlan'){ const gold=e.sty==='ban'; for(const [x,y,d] of e.pts){ burst(x*T,y*T-14,8,{col:gold?C_GOLD:['#ffffff','#bff0d0','#4ab878'],kind:'spark',sp:[30,90],life:[.2,.4]}); NUM.push({x:x*T+rnd(-6,6),y:y*T-24,v:d,t}); }
@@ -608,14 +609,55 @@ const wImg=k=>cached('wimg'+k,()=>{ const s=A.muWeapon(k); if(!s) return GAME.ic
   const c=A.cv(48,48), g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(s.c,0,0,48,48); return c.toDataURL(); });
 UI.defPlace('musmith',()=>UI.open('Thợ Rèn Huyền Thoại · 50 vũ khí',()=>{ const it=G().items||{}, cur=ME&&ME.wep, ok=ME&&ME.cls, W=M.weapons;
   const xw=k=>({...exOf(ME.acc),...(W[k]&&W[k].bonus||{})}), cp=k=>ok?SD.muPower(SD.muStats(ME.cls,ME.lv,ME.fruit,k,ME.lg,xw(k)),xw(k)):0, base=ok?SD.muPower(SD.muStats(ME.cls,ME.lv,ME.fruit,cur,ME.lg,xw(cur)),xw(cur)):0;
-  return `<p>"Vũ khí rèn từ 5 hệ: Kịch Độc, Băng Giá, Hoả Ngục, Lôi Thần, Hư Không. Cầm vào là tăng công, ra chiêu có hiệu ứng riêng. 5 sao là hàng huyền thoại!"</p>${cur&&W[cur]?`<p class="muted">Đang cầm: <b>${esc(W[cur].name)}</b></p>`:''}${gunRow()}${sockRow()}${aceRow()}${shieldRow()}
+  return `<p>"Vũ khí rèn từ 5 hệ: Kịch Độc, Băng Giá, Hoả Ngục, Lôi Thần, Hư Không. Cầm vào là tăng công, ra chiêu có hiệu ứng riêng. 5 sao là hàng huyền thoại!"</p>${cur&&W[cur]?`<p class="muted">Đang cầm: <b>${esc(W[cur].name)}</b></p>`:''}${sockRow()}${aceRow()}${shieldRow()}
   ${Object.entries(M.wtypes).map(([tk,ty])=>`<h5>${esc(ty.name)} <small class="muted">· ${esc(ty.desc)} · ${bonusTxt(ty.bonus)}</small></h5><div class="mulg">${Object.keys(M.welems).map(ek=>{ const k='vw_'+tk+'_'+ek, w=W[k], up=ok?cp(k)-base:0;
     return `<div class="mulgc wr${w.star}"><img src="${wImg(k)}" width="48" height="48" alt=""><b>${esc(w.name)}</b><small class="star">${'★'.repeat(w.star)} ${esc(M.wrank[w.star])}</small><small>Công +${Math.round(w.atk*SD.enhMul(enhL(k))*100)}%${enhL(k)?` <span class="enlv">+${enhL(k)}</span>`:''}</small><small class="sub">${bonusTxt(scaleB(k,w.bonus))}</small>${up>0?`<small class="good">+${up} lực chiến</small>`:''}
-      <div class="mulgb">${it[k]?(cur===k?'<small class="good">✔ Đang cầm</small>':btn('musmithbuy','Cầm',{k},'pri')):btn('musmithbuy','Mua '+SD.fmt(w.price),{k},'pri')}</div></div>`; }).join('')}</div>`).join('')}`; },{wide:true}));
+      <div class="mulgb">${it[k]?(cur===k?'<small class="good">✔ Đang cầm</small>':btn('musmithbuy','Cầm',{k},'pri')):btn('musmithbuy','Mua '+SD.fmt(w.price),{k},'pri')}</div></div>`; }).join('')}</div>`).join('')}${gunRow()}`; },{wide:true}));
 // Súng siêu mạnh (data.js MU.guns): mục riêng ở Thợ Rèn, mua / cầm như vũ khí khác (cường hoá, khảm được), bắn xa hơn
-const gunRow=()=>{ const it=G().items||{}, cur=ME&&ME.wep, W=M.weapons; return `<h5>🔫 Súng siêu mạnh <small class="muted">· bắn xa hơn, cường hoá + khảm được như vũ khí khác</small></h5><div class="mulg">${Object.keys(M.guns).map(k=>{ const w=W[k];
+const gunRow=()=>{ const it=G().items||{}, cur=ME&&ME.wep, W=M.weapons; return `<div class="mulgh"><b>👑 Súng & Món Huyền Thoại</b> <small class="muted">· súng bắn xa hơn, cường hoá + khảm được như vũ khí khác</small></div><div class="mulg">${Object.keys(M.guns).map(k=>{ const w=W[k];
   return `<div class="mulgc wr5 gunc ${w.legend?'gunleg':''}"><img src="${wImg(k)}" width="48" height="48" alt=""><b>${esc(w.name)}</b><small class="star">${w.legend?'👑 HUYỀN THOẠI':'★★★★★ Siêu mạnh'}</small><small>Công +${Math.round(w.atk*SD.enhMul(enhL(k))*100)}% · tầm +${String(w.reach).replace('.',',')} ô${enhL(k)?` <span class="enlv">+${enhL(k)}</span>`:''}</small><small class="sub">${bonusTxt(scaleB(k,w.bonus))}${w.spray?` · mỗi phát toả ${w.spray.n} tia đạn`:''}</small><small class="muted">${esc(w.desc)}</small>
-    <div class="mulgb">${it[k]?(cur===k?'<small class="good">✔ Đang cầm</small>':btn('musmithbuy','Cầm',{k},'pri')):btn('musmithbuy','Mua '+SD.fmt(w.price),{k},'pri')}</div></div>`; }).join('')}</div>`; };
+    <div class="mulgb">${it[k]?(cur===k?'<small class="good">✔ Đang cầm</small>':btn('musmithbuy','Cầm',{k},'pri')):btn('musmithbuy','Mua '+SD.fmt(w.price),{k},'pri')}</div></div>`; }).join('')}${legItemsRow()}</div>`; };
+// cụm món huyền thoại (cuối bảng Thợ Rèn): Áo Mikenco (bất tử ở MU), Nắm Đấm Tâm Đỗ (ô tay trái), Vết Xăm Kaixa Hắc Ám, Quần Lót Ren Trần Hà Linh
+const legItemsRow=()=>{ const own=(G().owned||{}), top=((G().look||{}).outfit||{}).top, MK=M.mikenco, TD=AC.kh_tamdo, tdOwn=ME&&ME.accOwned&&ME.accOwned.kh_tamdo, tdOn=ME&&ME.acc&&ME.acc.shield==='kh_tamdo', lo=(ME&&ME.legOwn)||{}, lon=(ME&&ME.leg)||{};
+  const card=(img,w,h,name,sub,good,desc,act)=>`<div class="mulgc wr5 gunc gunleg"><img src="${img}" width="${w}" height="${h}" alt=""><b>${esc(name)}</b><small class="star">👑 HUYỀN THOẠI${sub}</small><small class="good">${good}</small><small class="muted">${esc(desc)}</small><div class="mulgb">${act}</div></div>`;
+  const legAct=k=>!ME||!ME.cls?'':lo[k]?btn('mulegwear',lon[k]?'Cởi':'Mặc',{k},lon[k]?'':'pri')+(lon[k]?'<small class="good">✔ Đang mặc</small>':''):btn('mulegbuy','Mua '+SD.fmt(M.leg[k].price),{k},'pri');
+  return `${card(setImg(MK.k),48,68,SD.CLOTHES[MK.k].name,'','Mặc vào ở MU: BẤT TỬ',MK.desc,own[MK.k]?btn('mumik',top===MK.k?'Cởi áo':'Mặc áo',{},top===MK.k?'':'pri'):btn('mumikbuy','Mua '+SD.fmt(MK.price),{},'pri'))}
+  ${card(shImg('kh_tamdo'),52,60,TD.name,' · tay trái',`Công +${Math.round(TD.bonus.atk*100)}% · chí mạng ${Math.round(TD.critX*100)}% sát thương`,TD.desc,!ME||!ME.cls?'':tdOn?btn('mushield','Tháo',{k:''})+'<small class="good">✔ Đang đeo</small>':tdOwn?btn('mushield','Đeo',{k:'kh_tamdo'},'pri'):btn('mutamdobuy','Mua '+SD.fmt(TD.price),{},'pri'))}
+  ${card(legImg('xam'),48,48,M.leg.xam.name,'',`${M.leg.xam.ghosts} bóng ma đánh cùng chủ`,M.leg.xam.desc,legAct('xam'))}
+  ${card(legImg('linh'),48,48,M.leg.linh.name,'',`Máu ×${M.leg.linh.hp} · thủ ×${M.leg.linh.def}`,M.leg.linh.desc,legAct('linh'))}`; };   /* nằm chung lưới với súng (gunRow) */
+UI.onAct('mumikbuy',async()=>{ if(!confirm(`Mua ${SD.CLOTHES[M.mikenco.k].name} giá ${SD.fmt(M.mikenco.price)}?`)) return; const r=await GAME.act({t:'mu',op:'mikbuy'}); if(r&&!r.err){ const P=GAME.P; GAME.sfx('level_up',.9); GAME.bigText('BẤT TỬ!'); toast(esc(r.msg),'item'); burst(P.x,P.y-20,50,{col:C_GOLD,kind:'star',sp:[40,160],life:[.6,1.2]}); ring(P.x,P.y,6,50,.8,'#ffd84a',3); } UI.refresh(); });
+UI.onAct('mumik',async()=>{ const r=await GAME.act({t:'mu',op:'mikwear'}); if(r&&!r.err){ GAME.sfx('item_pickup',.7); toast(esc(r.msg),'item'); } UI.refresh(); });
+UI.onAct('mutamdobuy',async()=>{ const TD=AC.kh_tamdo; if(!confirm(`Mua ${TD.name} giá ${SD.fmt(TD.price)}?`)) return; shDone(await GAME.act({t:'mu',op:'accbuy',k:'kh_tamdo'})); });
+UI.onAct('mulegbuy',async d=>{ const L=M.leg[d.k]; if(!L||!confirm(`Mua ${L.name} giá ${SD.fmt(L.price)}?`)) return; const r=await GAME.act({t:'mu',op:'legbuy',k:d.k}); if(r&&!r.err){ const P=GAME.P; GAME.sfx('level_up',.9); GAME.bigText(d.k==='xam'?'BÓNG MA THỨC TỈNH!':'HUYỀN THOẠI!'); toast(esc(r.msg),'item'); burst(P.x,P.y-20,50,{col:d.k==='xam'?C_DARK:C_GOLD,kind:'star',sp:[40,160],life:[.6,1.2]}); ring(P.x,P.y,6,50,.8,d.k==='xam'?'#b060ff':'#ffd84a',3); } UI.refresh(); });
+UI.onAct('mulegwear',async d=>{ const r=await GAME.act({t:'mu',op:'legwear',k:d.k}); if(r&&!r.err){ GAME.sfx('item_pickup',.7); toast(esc(r.msg),'item'); } UI.refresh(); });
+// hình 2 món huyền thoại cuối (vẽ tay bằng canvas, lưu sẵn): Vết Xăm bật lửa nở hoa, Quần Lót Ren đen thêu hồng
+const LEGI={}; function legImg(k){ if(LEGI[k]) return LEGI[k]; const c=document.createElement('canvas'); c.width=c.height=48; const g=c.getContext('2d'), R=(x,y,w,h,f)=>{ g.fillStyle=f; g.fillRect(x,y,w,h); };
+  if(k==='xam'){ g.fillStyle='#f2d6c4'; g.beginPath(); g.moveTo(10,48); g.lineTo(4,0); g.lineTo(40,0); g.lineTo(44,48); g.fill(); g.fillStyle='#e4c0aa'; g.fillRect(6,0,3,48);
+    for(const [x,y,w,h,f] of [[6,22,5,2,'#ff7a2a'],[5,28,6,2,'#3aa04a'],[7,34,4,2,'#e8336a'],[35,21,5,2,'#38d0d8'],[36,28,6,2,'#ff7a2a'],[35,35,5,2,'#3aa04a']]) R(x,y,w,h,f);
+    R(16,18,15,24,'#111'); R(17,19,13,22,'#e8336a'); R(17,30,13,11,'#38d0d8'); R(18,20,5,3,'#ff6a9a'); R(20,33,2,2,'#fff'); R(24,36,4,3,'#3aa04a'); R(15,42,17,3,'#111'); R(16,42,15,2,'#e8336a');
+    R(17,12,10,6,'#111'); R(18,13,8,4,'#7fd8d0'); R(27,14,4,2,'#888'); R(19,14,4,1,'#fff');
+    g.fillStyle='#111'; g.beginPath(); g.arc(22,6,6,0,7); g.fill(); g.fillStyle='#ff8a2a'; g.beginPath(); g.arc(22,6,5,0,7); g.fill(); g.fillStyle='#38d0d8'; g.beginPath(); g.arc(22,6,3.6,0,7); g.fill(); R(21,5,2,2,'#e8336a');
+    g.fillStyle='#2f8a3a'; g.beginPath(); g.ellipse(14,12,5,2.4,-.5,0,7); g.fill(); g.beginPath(); g.ellipse(31,10,6,2.4,.4,0,7); g.fill();
+    for(const [x,y] of [[12,17],[11,21],[34,16],[36,19]]) R(x,y,2,3,'#38d0d8'); }
+  else { g.fillStyle='#ff4d8a'; g.globalAlpha=.25; g.beginPath(); g.arc(24,24,22,0,7); g.fill(); g.globalAlpha=1;
+    g.fillStyle='#16101a'; g.beginPath(); g.moveTo(4,12); g.lineTo(44,12); g.quadraticCurveTo(40,26,28,38); g.lineTo(20,38); g.quadraticCurveTo(8,26,4,12); g.fill();
+    g.fillStyle='#2c2030'; for(let y=16;y<34;y+=4) for(let x=10+(y%8?2:0);x<40;x+=4) if(Math.abs(x-24)<(40-y)*.8) g.fillRect(x,y,2,2);
+    g.fillStyle='#16101a'; for(let x=4;x<=44;x+=4){ g.beginPath(); g.arc(x,12,2.2,Math.PI,0); g.fill(); }
+    g.fillStyle='#ff9ac0'; for(let x=6;x<44;x+=4) g.fillRect(x,13,2,1);
+    g.fillStyle='#c81e4a'; g.beginPath(); g.arc(24,22,4.6,0,7); g.fill(); g.fillStyle='#ff5a84'; g.beginPath(); g.arc(24,22,2.6,0,7); g.fill(); g.fillStyle='#ffd0dc'; g.fillRect(23,21,2,2);
+    g.fillStyle='#3a8a3a'; g.beginPath(); g.ellipse(18.5,25,3,1.5,.5,0,7); g.fill(); g.beginPath(); g.ellipse(29.5,25,3,1.5,-.5,0,7); g.fill();
+    g.fillStyle='#ff6aa0'; g.beginPath(); g.moveTo(24,14); g.lineTo(19,11); g.lineTo(19,17); g.fill(); g.beginPath(); g.moveTo(24,14); g.lineTo(29,11); g.lineTo(29,17); g.fill(); g.fillRect(23,13,2,3); }
+  return LEGI[k]=c.toDataURL(); }
+// Vết Xăm Kaixa Hắc Ám: 12 bóng ma xoay quanh người xăm (mình + người khác, mọi map), góc theo đồng hồ chung để chỗ bóng ma lao đi khớp chỗ vẽ
+const GH_N=M.leg.xam.ghosts, GH_R=M.leg.xam.gr, ghAng=i=>performance.now()/900+i*Math.PI*2/GH_N, ghPos=(x,y,i)=>[x+Math.cos(ghAng(i))*GH_R*T,y+Math.sin(ghAng(i))*GH_R*T*.6];
+function ghostPeople(){ const out=[], P=GAME.P; if(ME&&ME.leg&&ME.leg.xam&&!P.incar) out.push({x:P.x,y:P.y,k:0});
+  for(const r of (GAME.REM||new Map()).values()){ if(!r.look) continue; if(r._lkx!==r.look){ r._lkx=r.look; try{ r._xam=!!JSON.parse(r.look).xam; }catch(e){ r._xam=false; } } if(r._xam) out.push({x:r.x,y:r.y,k:r.id}); }
+  return out; }
+function drawGhosts(list,ctx,cam,clock){ for(const o of ghostPeople()) for(let i=0;i<GH_N;i++){ const [gx,gy]=ghPos(o.x,o.y,i), fy=gy-16+Math.sin(clock*4+i)*2.5;
+  list.push({y:gy,d:()=>{ const g=ctx, X=Math.round(gx-cam.x), Y=Math.round(fy-cam.y); g.save(); g.globalAlpha=.78;
+    const gr=g.createRadialGradient(X,Y,1,X,Y,11); gr.addColorStop(0,'rgba(150,60,220,.45)'); gr.addColorStop(1,'rgba(150,60,220,0)'); g.fillStyle=gr; g.fillRect(X-11,Y-11,22,22);
+    g.fillStyle='#120a1c'; g.beginPath(); g.arc(X,Y-2,4.5,Math.PI,0); g.lineTo(X+4.5,Y+4); for(let j=0;j<4;j++){ const w=Math.sin(clock*8+i+j)*1.2; g.lineTo(X+3-j*2.2+w,Y+(j%2?5:8)); } g.lineTo(X-4.5,Y+4); g.fill();
+    g.fillStyle='#d080ff'; g.fillRect(X-3,Y-3,2,2); g.fillRect(X+1,Y-3,2,2); g.restore(); }}); } }
 // khảm vũ khí rơi từ boss vào vũ khí chính đang cầm: vũ khí chính cộng thêm công + chỉ số của món khảm, ánh xanh lá mạ vàng (server op sock)
 function sockRow(){ const it=G().items||{}, W=M.weapons, cur=ME&&ME.wep, sk=((ME&&ME.sock)||{})[cur], drops=Object.keys(W).filter(k=>!W[k].store&&(it[k]||0)>(k===cur?1:0));
   const head=`<h5>💎 Khảm vũ khí boss</h5><p class="muted">Khảm vũ khí rơi từ boss vào vũ khí chính đang cầm (phí ${SD.fmt(M.sock.fee)}): vũ khí chính có thêm công + chỉ số của món khảm và ánh xanh lá mạ vàng. Mỗi vũ khí 1 ô khảm, khảm món khác thì món cũ mất.</p>`;
@@ -701,7 +743,7 @@ const a0=X.anim; X.anim=(o,clock)=>{ const a=o.anim; if(a==='mualtar'){ const f=
   if(a==='mufount'){ const f=Math.floor(clock*3)%2; return cached('fo'+f,()=>A.muFountain(f)); } if(a==='mulamp'){ const f=Math.floor(clock*3+o.x)%2; return cached('gl'+f,()=>A.muGhostLamp(f)); } return a0(o,clock); };
 const HID_ICON={cuon_truc:'scroll',banh_mut:'jambread',lua_ma:'ghostfire',vay_rong:'scale'};
 let lastHud=0;
-const d0=X.draw; X.draw=(list,ctx)=>{ d0(list,ctx); const now=performance.now(), dt=Math.min(.05,(now-lastT)/1000); lastT=now; if(now-lastHud>250){ lastHud=now; hudTick(); } const cam=GAME.cam, clock=GAME.clock; drawAcc(list,ctx,cam,clock); if(!here()) return; stepPT(dt);
+const d0=X.draw; X.draw=(list,ctx)=>{ d0(list,ctx); const now=performance.now(), dt=Math.min(.05,(now-lastT)/1000); lastT=now; if(now-lastHud>250){ lastHud=now; hudTick(); } const cam=GAME.cam, clock=GAME.clock; drawAcc(list,ctx,cam,clock); drawGhosts(list,ctx,cam,clock); if(!here()) return; stepPT(dt);
   for(const h of hidList()){ const x=h.x*T, y=h.y*T, ic=cached('hi'+h.k,()=>{ const c=A.icon(HID_ICON[h.k],2); return c; }); list.push({y,d:()=>{ ctx.globalAlpha=.55+.45*Math.abs(Math.sin(clock*3)); ctx.drawImage(ic,Math.round(x-14-cam.x),Math.round(y-30-cam.y+Math.sin(clock*3)*2)); ctx.globalAlpha=1; }}); if(Math.random()<.05) burst(x,y-16,1,{col:C_GOLD,kind:'star',sp:[5,15],life:[.4,.7]}); }
   for(const B of BH()){ list.push({y:-9997,d:()=>drawTele(ctx,B,now,cam,clock)}); list.push({y:B.y*T,d:()=>drawBoss(ctx,B,now,cam,clock)}); }
   drawWest(list,ctx,now,cam,clock);
