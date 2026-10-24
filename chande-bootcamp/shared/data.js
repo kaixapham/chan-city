@@ -1374,7 +1374,7 @@ MU.pasBook=Object.fromEntries(Object.entries(MU.passive).map(([k,P])=>['snt_'+k,
 for(const [b,x] of Object.entries(MU.pasBook)) ITEMS[b]={name:'Sách Nội Tại: '+MU.passive[x.pas].name,icon:'pasbook_'+x.pas};
 const muStats=(cls,lv,fruit,wep,lg,ex)=>{ const c=MU.cls[cls], k=1+(lv-1)*.08, f=(fruit&&MU.fruits[fruit]&&MU.fruits[fruit].bonus)||{}, w=(wep&&MU.weapons[wep])||{}, L=(lg&&MU.legacy[lg]&&MU.legacy[lg].bonus)||{}, X=ex||{}, b={hp:(f.hp||0)+(L.hp||0)+(X.hp||0),mp:(f.mp||0)+(L.mp||0)+(X.mp||0),atk:(f.atk||0)+(L.atk||0)+(X.atk||0),def:(f.def||0)+(L.def||0)+(X.def||0)};
   return {hp:Math.round(c.hp*k*(1+b.hp)),mp:Math.round(c.mp*(1+(lv-1)*.05)*(1+b.mp)),atk:Math.round(c.atk*k*(1+b.atk)*(1+(w.atk||0))),def:Math.round(c.def*(1+(lv-1)*.06)*(1+b.def)),
-    aspd:Math.min(4,+((c.aspd||1)*(1+(lv-1)*.006)*(1+(X.aspd||0))).toFixed(2))}; };   /* tốc đánh thường: số đòn / giây, tăng theo cấp + đồ (aspd) */
+    aspd:w.aspdSet||Math.min(4,+((c.aspd||1)*(1+(lv-1)*.006)*(1+(X.aspd||0))).toFixed(2))}; };   /* aspdSet: vũ khí có tốc đánh cố định (Minigun Chande 16 phát / giây) */   /* tốc đánh thường: số đòn / giây, tăng theo cấp + đồ (aspd) */
 // Ngọc cường hoá (Phù Thuỷ Cường Hoá ở MU): mọi món đồ MU (vũ khí, giáp class, set legacy, cánh, dây chuyền, hộ thân, aura) khắc được 12 lỗ cường hoá (+1 → +12).
 // Mỗi lần khắc tốn 1 ngọc + phí; cấp càng cao tỉ lệ càng thấp (lỗ cuối 7%), thất bại mất ngọc. Lính Cát đầu đội cấp cao cộng tỉ lệ (lv × 0,2%, tối đa +15%);
 // mỗi loài Lính Cát huyền thoại tặng 1 Ngọc Cường Hoá Huyền Thoại (80% thành công). Ngọc rơi từ boss MU, nhiệm vụ ẩn ở mọi map, vớt dưới hồ Ké khi chèo kayak; Phù Thuỷ cũng bán.
@@ -2746,7 +2746,7 @@ MU.guns={
   vw_gun_shadow:{name:'Tiểu Liên Bóng Đêm',el:'void',star:5,price:150000000,atk:.55,reach:3,bonus:{aspd:.25,crit:.06},col:'#ff4a4a',desc:'Tiểu liên đen đèn đỏ: xả đạn nhanh'},
   vw_gun_plasma:{name:'Súng Plasma Băng Xanh',el:'ice',star:5,price:180000000,atk:.6,reach:3.5,bonus:{aspd:.2,chainp:.2},col:'#4ab0ff',desc:'Súng năng lượng trắng xanh: đạn plasma giật lan sang quái gần'},
   vw_gun_aztec:{name:'Súng Ngắm Thần Mặt Trời',el:'thunder',star:5,price:220000000,atk:.75,reach:5,bonus:{crit:.15,shred:.25},col:'#3ae8d8',desc:'Súng ngắm hoa văn cổ vàng ngọc: bắn rất xa, xuyên giáp'},
-  vw_gun_chande:{name:'Minigun Huyền Thoại Chande',el:'fire',star:5,price:300000000,atk:.8,reach:3.5,legend:1,spray:{n:10,r:4,k:.4},bonus:{aspd:.6,crit:.08},col:'#ff3a2a',desc:'HUYỀN THOẠI · 6 nòng xoay đầu lâu đỏ: bắn liên tục, mỗi phát toả 10 tia đạn'}};
+  vw_gun_chande:{name:'Minigun Huyền Thoại Chande',el:'fire',star:5,price:300000000,atk:.8,reach:3.5,legend:1,spray:{n:10,r:4,k:.4},aspdSet:16,bonus:{crit:.08},col:'#ff3a2a',desc:'HUYỀN THOẠI · 6 nòng xoay đầu lâu đỏ: bắn liên tục 16 phát / giây, mỗi phát toả 10 tia đạn'}};
 for(const [k,g] of Object.entries(MU.guns)){ MU.weapons[k]={...g,type:'gun',gk:k.slice(7),store:true,gun:1}; ITEMS[k]={name:g.name,icon:'wpn_'+k.slice(3)}; }
 /* Trái Ác Quỷ (25/10, chủ game yêu cầu): thêm 10 trái (đủ 16) + cân bằng cả 16 theo 1 thước: chiêu đánh 1 mục tiêu ≈ 0,33 lần công / giây hồi chiêu, chiêu lan hoặc có khống chế (chậm, choáng, hút máu, giảm hồi máu) thấp hơn,
    chiêu hồi máu cho đội; chỉ số trái tổng ~16–20%. fx: kiểu hiệu ứng client của trái mới (maps8 ffxStep: beam tia, burst cầu nổ, aoe nổ lan, heal hồi máu) */
