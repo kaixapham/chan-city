@@ -63,7 +63,8 @@ function fixProfile(p,name){ const d=defaults(name); for(const k in d){ if(p[k]=
   if(giftName(p).normalize('NFC').toLowerCase()==='chika phú'.normalize('NFC')&&!(p.flags&&p.flags.gift15mChika)){ p.money+=15000000; p.flags.gift15mChika=true; }
   // quà admin: Ben Jr được cộng 6.000.000đ (1 lần, 25/10)
   if(giftName(p).normalize('NFC').toLowerCase()==='ben jr'&&!(p.flags&&p.flags.gift6mBen)){ p.money+=6000000; p.flags.gift6mBen=true; }
-  // quà admin: Ben Jr có cô dâu NPC đi theo (ai cũng thấy, bride.js)
+  // quà admin: Ben Jr có cô dâu NPC đi theo, Mèn Mén có Anh Tóc Dài đi theo (ai cũng thấy, bride.js)
+  if(giftName(p).normalize('NFC').toLowerCase()==='mèn mén'.normalize('NFC')&&!(p.flags&&p.flags.tocdai)) p.flags.tocdai=true;
   if(giftName(p).normalize('NFC').toLowerCase()==='ben jr'&&!(p.flags&&p.flags.bride)) p.flags.bride=true;
   // quà admin: Kaixa được cộng 600.000.000đ (1 lần, 25/10)
   if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.gift4bKaixa)){ p.money+=4000000000; p.flags.gift4bKaixa=true; }   /* chủ game tặng thêm 4 tỷ (25/10) */
@@ -129,9 +130,10 @@ function note(pl,msg,kind){ send(pl,{t:'note',msg,kind:kind||''}); }
 
 /* ---------- cảnh ---------- */
 // thông tin hiển thị của 1 người (gửi cho người khác lần đầu thấy, hoặc khi đổi đồ)
-function info(pl){ return {t:'pj',id:pl.pid,n:pl.prof.name,l:pl.prof.look,lv:pl.prof.level,tag:pl.tag?pl.tag():'',pt:S.petState(pl.prof,now())==='sulk'?'':pl.prof.pet||'',lc:lcLead(pl.prof),bn:(pl.prof.items.den_bingo||0)>0?1:0,br:pl.prof.flags&&pl.prof.flags.bride?1:0,rk:module.exports.rankOf?module.exports.rankOf(pl.uid):0}; }   // rk: hạng top 10 đại gia (lb.js)   // bn: có đèn bí ngô theo chân   // br: có cô dâu đi theo
+function info(pl){ return {t:'pj',id:pl.pid,n:pl.prof.name,l:pl.prof.look,lv:pl.prof.level,tag:pl.tag?pl.tag():'',pt:S.petState(pl.prof,now())==='sulk'?'':pl.prof.pet||'',lc:lcLead(pl.prof),bn:(pl.prof.items.den_bingo||0)>0?1:0,nf:npcFollow(pl.prof),rk:module.exports.rankOf?module.exports.rankOf(pl.uid):0}; }   // rk: hạng top 10 đại gia (lb.js)   // bn: có đèn bí ngô theo chân   // nf: NPC đi theo (bride.js)
 // Lính Cát đầu đội (còn sức) gửi kèm thông tin người chơi để người khác thấy nó đi theo: 'loài' hoặc 'loài*' (dạng Lv50)
 function lcLead(p){ const m=p&&p.skills&&p.skills.linhcat&&p.lc&&p.lc.party&&p.lc.party[0]; return m&&m.hp>0?m.sp+(m.asc?'*':''):''; }
+const npcFollow=p=>!p.flags?'':p.flags.bride?'bride':p.flags.tocdai?'tocdai':'';   /* NPC quà admin đi theo người chơi: cô dâu (Ben Jr), Anh Tóc Dài (Mèn Mén) */
 function refreshInfo(pl){ for(const q of players.values()) if(q.sent&&q.sent.has(pl.pid)) q.sent.delete(pl.pid); }
 // chuyển người chơi sang cảnh khác; x,y theo ô
 function moveTo(pl,id,x,y,extra={}){
