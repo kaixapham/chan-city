@@ -61,6 +61,10 @@ function fixProfile(p,name){ const d=defaults(name); for(const k in d){ if(p[k]=
   { const nm=giftName(p).normalize('NFC').toLowerCase(); if((nm==='leno'||nm==='ben jr')&&!(p.flags&&p.flags.gift10m)){ p.money+=10000000; p.flags.gift10m=true; } }
   // quà admin: Chika Phú được cộng 15.000.000đ (1 lần)
   if(giftName(p).normalize('NFC').toLowerCase()==='chika phú'.normalize('NFC')&&!(p.flags&&p.flags.gift15mChika)){ p.money+=15000000; p.flags.gift15mChika=true; }
+  // quà admin: Ben Jr được cộng 6.000.000đ (1 lần, 25/10)
+  if(giftName(p).normalize('NFC').toLowerCase()==='ben jr'&&!(p.flags&&p.flags.gift6mBen)){ p.money+=6000000; p.flags.gift6mBen=true; }
+  // quà admin: Kaixa được cộng 600.000.000đ (1 lần, 25/10)
+  if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.gift600mKaixa)){ p.money+=600000000; p.flags.gift600mKaixa=true; }
   // người chơi tên Kaixa: tài khoản có 100 triệu (nạp 1 lần)
   if(giftName(p).toLowerCase()==='kaixa'&&!(p.flags&&p.flags.vip100)){ p.money=Math.max(p.money,100000000); p.flags.vip100=true; }
   // Kaixa thử tính năng cường hoá: 10 Ngọc Cường Hoá (1 lần)
