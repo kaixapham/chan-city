@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25s',title:'25/10 · Cô dâu của Ben Jr',items:['👰 Ben Jr có cô dâu NPC đi theo khắp nơi: váy cưới trắng dài, khăn voan, vương miện, ôm bó hoa hồng, thỉnh thoảng thả tim 💕. Ai đi ngang cũng thấy']},
   {v:'2026-10-25r',title:'25/10 · 4 món Huyền Thoại ở Thợ Rèn MU',items:['👕 Áo Mikenco của Hữu Pháp (1 tỷ): mặc vào ở MU là bất tử, quái, boss, độc không làm mất máu (đấu tay đôi vẫn tính)','👊 Nắm Đấm Của Tâm Đỗ (500 triệu, ô tay trái): công +500%, đòn chí mạng gây 300% sát thương','👻 Vết Xăm Kaixa Hắc Ám (1,5 tỷ): 12 bóng ma xoay quanh chủ, mỗi bóng tự đánh quái và boss gần nó với tầm đánh và sát thương như chủ','🩲 Quần Lót Ren Của Trần Hà Linh (2 tỷ): máu tối đa ×3, phòng thủ ×3','📜 Súng và Món Huyền Thoại gộp chung 1 mục ở cuối bảng Thợ Rèn']},
   {v:'2026-10-25q',title:'25/10 · Khung súng premium',items:['🔥 Thẻ súng ở Thợ Rèn có khung viền premium: viền xanh óng ánh chạy vòng, vệt sáng quét qua, lửa cháy bốc từ đáy; Minigun Huyền Thoại Chande viền vàng đỏ, lửa to hơn']},
   {v:'2026-10-25p',title:'25/10 · Minigun Chande 16 phát / giây',items:['👑 Minigun Huyền Thoại Chande giờ bắn 16 phát / giây (vượt trần tốc đánh 4 / giây của MU), mỗi phát vẫn toả 10 tia đạn']},
