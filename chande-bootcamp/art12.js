@@ -116,6 +116,7 @@ const ICONS12={fruit_mera:FRUIT_ICON('#ff6a2a','#ffd84a'),fruit_hie:FRUIT_ICON('
   jewel_bless:P=>{ P.rect(5,2,4,2,'#c8e8ff'); P.rect(3,4,8,6,'#7ab8f0'); P.rect(5,10,4,2,'#5a98d8'); P.rect(5,4,2,3,'#ffffff'); },
   jewel_soul:P=>{ P.rect(5,2,4,2,'#ffe8a0'); P.rect(3,4,8,6,'#f2c43d'); P.rect(5,10,4,2,'#c8901a'); P.rect(5,4,2,3,'#ffffff'); },
   jewel_chaos:P=>{ P.rect(4,2,6,2,'#ff9ad0'); P.rect(2,4,10,6,'#c83a8a'); P.rect(4,10,6,2,'#8a1a5a'); P.rect(4,4,2,3,'#ffd0e8'); P.px(9,7,'#ffd84a'); }};
+for(const [k,f] of Object.entries(SHARED.MU.fruits)) if(!ICONS12['fruit_'+k]) ICONS12['fruit_'+k]=FRUIT_ICON(f.col,'#ffffff');   /* icon 10 Trái Ác Quỷ mới theo màu trái */
 const oldIcon12=A.icon; A.icon=function(name,scale=1){ const f=ICONS12[name]; if(!f) return oldIcon12(name,scale); const c=A.cv(14,14); f(A.painter(c.getContext('2d'))); A.outline(c);
   if(scale===1) return c; const s=A.cv(14*scale,14*scale), sg=s.getContext('2d'); sg.imageSmoothingEnabled=false; sg.drawImage(c,0,0,s.width,s.height); return s; };
 })();

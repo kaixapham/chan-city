@@ -2738,6 +2738,24 @@ ENH.fruit={per:.07}; const fruitMul=L=>1+(L||0)*ENH.fruit.per;
 { const TS=Array.isArray(LEGEND.tasks)?LEGEND.tasks:Object.values(LEGEND.tasks), lb=(t,v)=>t.money?`${v/1e6} triệu`:String(v);
   for(const t of TS) if(t.it==='pod'&&t.t==='ach'&&t.need>1){ const n=t.money?Math.ceil(t.need/5/1e6)*1e6:Math.max(1,Math.ceil(t.need/5)); t.label=t.label.replace(lb(t,t.need),lb(t,n)); t.need=n; }
   const lf=TS.find(t=>t.st==='luffy'); if(lf){ lf.label=lf.label.replace(String(lf.need),'50'); lf.need=50; } }
+/* Trái Ác Quỷ (25/10, chủ game yêu cầu): thêm 10 trái (đủ 16) + cân bằng cả 16 theo 1 thước: chiêu đánh 1 mục tiêu ≈ 0,33 lần công / giây hồi chiêu, chiêu lan hoặc có khống chế (chậm, choáng, hút máu, giảm hồi máu) thấp hơn,
+   chiêu hồi máu cho đội; chỉ số trái tổng ~16–20%. fx: kiểu hiệu ứng client của trái mới (maps8 ffxStep: beam tia, burst cầu nổ, aoe nổ lan, heal hồi máu) */
+{ const NF={
+    suna:['Trái Cát (Suna Suna)','#d8b46a','Thân cát: cuốn bão cát làm chậm mọi kẻ địch quanh mục tiêu',{k:'bao_cat',name:'Bão Cát',cd:11,mul:2.4,range:4,aoe:2.5,slow:2.5,fx:'aoe'},{def:.12,hp:.05}],
+    pika:['Trái Ánh Sáng (Pika Pika)','#fff07a','Tốc độ ánh sáng: bắn tia sáng xuyên từ rất xa',{k:'kiem_sang',name:'Tia Sáng Bát Xích',cd:10,mul:3.4,range:6.5,fx:'beam'},{crit:.06,atk:.05}],
+    magu:['Trái Dung Nham (Magu Magu)','#e8401a','Dung nham nóng chảy: nắm đấm thiêu cháy, đối thủ hồi máu kém',{k:'dung_nham',name:'Đại Phún Hoả',cd:12,mul:3.6,range:3,gw:.4,wdur:5,fx:'burst'},{atk:.14}],
+    ope:['Trái Phẫu Thuật (Ope Ope)','#5ab8e8','Room: cắt xẻ mọi kẻ địch trong vòng, hút lại máu',{k:'shambles',name:'Room · Shambles',cd:12,mul:2.4,range:5,aoe:2.5,drain:.2,el:'arcane',fx:'aoe'},{mp:.12,cdr:.05}],
+    bara:['Trái Phân Mảnh (Bara Bara)','#e890a8','Tách người thành mảnh: phóng tay chém liên tục, hồi chiêu rất nhanh',{k:'chia_than',name:'Bara Bara Hou',cd:5,mul:1.7,range:4,fx:'beam'},{hp:.1,aspd:.06}],
+    mochi:['Trái Bánh Dày (Mochi Mochi)','#f4efe0','Thân bánh dày: đấm dẻo đè choáng đối thủ',{k:'banh_day',name:'Đấm Bánh Dày',cd:11,mul:2.8,range:4,stun:.8,fx:'burst'},{hp:.14,def:.04}],
+    ito:['Trái Sợi Chỉ (Ito Ito)','#e8e0ff','Lồng Chim: chỉ thép quấn lấy kẻ địch quanh mục tiêu, làm chậm',{k:'long_chim',name:'Lồng Chim',cd:11,mul:2.4,range:5,aoe:2.5,slow:2,el:'arcane',fx:'aoe'},{atk:.08,crit:.04}],
+    gura:['Trái Chấn Động (Gura Gura)','#bfe8ff','Sức mạnh huỷ diệt thế giới: đấm nứt không gian, chấn động lan rộng',{k:'dong_dat',name:'Chấn Động Thế Giới',cd:15,mul:4.2,range:4,aoe:3.5,el:'elec',fx:'aoe'},{atk:.1,def:.06}],
+    hana:['Trái Hoa (Hana Hana)','#f28ab8','Mọc tay ở mọi nơi: siết chặt đối thủ, choáng',{k:'hoa_tay',name:'Hoa Tay Siết',cd:10,mul:2.4,range:5,stun:1,fx:'burst'},{mp:.1,def:.08}],
+    tori:['Trái Phượng Hoàng (Tori Tori · Phượng Hoàng)','#4ad8e8','Lửa xanh tái sinh: hồi máu cả đội quanh mình',{k:'lua_tai_sinh',name:'Lửa Xanh Tái Sinh',cd:12,heal:.35,team:8,fx:'heal'},{hp:.12,def:.06}]};
+  for(const [k,[name,col,flav,skill,bonus]] of Object.entries(NF)){ MU.fruits[k]={name,col,skill:{mp:0,...skill},bonus,flav}; ITEMS['taq_'+k]={name,icon:'fruit_'+k}; }
+  const BAL={mera:[{cd:10,mul:3.4,range:3.5},{atk:.12}],hie:[{cd:10,mul:2.6,range:3.5,slow:3},{def:.15,hp:.04}],goro:[{cd:11,mul:3.6,range:4},{atk:.08,mp:.12}],gomu:[{cd:6,mul:2.1,range:4},{hp:.18}],
+    yami:[{cd:12,mul:3,range:3.5,drain:.3},{hp:.08,atk:.06},'Mở hố đen nuốt chửng kẻ địch, hút 30% sát thương thành máu'],chiyu:[{cd:14,heal:.45,team:8},{mp:.15,hp:.05},'Hồi 45% máu cho mình và đồng đội quanh 8 ô']};
+  for(const [k,[sk,b,fl]] of Object.entries(BAL)){ const f=MU.fruits[k]; Object.assign(f.skill,sk); f.bonus=b; f.flav=fl||f.flav||String(f.desc||'').split('.')[0]; }
+  for(const f of Object.values(MU.fruits)) f.desc=`${f.flav}. ${Object.entries(f.bonus).map(([s,v])=>`${MU.statVI[s]||s} +${Math.round(v*100)}%`).join(', ')}`; }
 /* rừng quái MU đông hơn (25/10, chủ game yêu cầu): mỗi ổ ×10 con (muforest.js make() xếp vòng rộng dần quanh ổ, giữ trong vùng), máu ×5, EXP nhân vật ×3, EXP MU ×3, tiền ×3 */
 for(const m of Object.values(MU.forest.mobs)){ m.n*=10; m.hp*=5; m.exp*=3; m.mu*=3; m.vnd*=3; }
 { const F=MU.forest, g0=F.gem, h0=F.gemHt; F.mat=+(F.mat/10).toFixed(4); F.gem=t=>g0(t)/10; F.gemHt=t=>h0(t)/10; }   /* quái gấp 10 nên tỉ lệ rơi nguyên liệu, Ngọc Cường Hoá, Ngọc Huyền Thoại mỗi con chia 10 (tổng ngọc / giờ như cũ) */
