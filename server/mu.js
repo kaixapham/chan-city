@@ -20,7 +20,8 @@ function extraOf(p){ const r=rec(p), o={hp:0,mp:0,atk:0,def:0,armor:0,gw:0,regen
   for(const k of Object.values(r.acc||{})){ const a=M.acc[k], km=mul(k); if(a) for(const [s,v] of Object.entries(a.bonus)) o[s]+=v*km; }
   for(const pp of [r.pas||{},r.pasB||{}]) for(const [k,n] of Object.entries(pp)){ const P=M.passive[k]; if(P) o[P.stat]+=P.per*n; }   /* điểm nội tại + cấp đọc sách */
   const w=M.weapons[r.wep]; if(w){ const km=mul(r.wep); if(w.bonus) for(const [s,v] of Object.entries(w.bonus)) o[s]+=v*km; if(w.atk) o.atk+=w.atk*(km-1); const SW=M.weapons[(r.sock||{})[r.wep]]; if(SW){ o.atk+=SW.atk||0; for(const [s,v] of Object.entries(SW.bonus||{})) o[s]+=v; } }   /* món khảm (r.sock[vũ khí chính]): cộng thêm công + chỉ số của vũ khí rơi từ boss */
-  { const FB=r.fruit&&M.fruits[r.fruit]&&M.fruits[r.fruit].bonus, fm=S.fruitMul(r.fenh); if(FB&&fm>1) for(const [s,v] of Object.entries(FB)) o[s]+=v*(fm-1); }   /* Trái Ác Quỷ cường hoá: phần chỉ số trái tăng thêm */   /* chỉ số phụ của vũ khí Thợ Rèn, công gốc (w.atk) tính trong muStats + phần cường hoá */
+  { const FB=r.fruit&&M.fruits[r.fruit]&&M.fruits[r.fruit].bonus, fm=S.fruitMul(r.fenh); if(FB&&fm>1) for(const [s,v] of Object.entries(FB)) o[s]+=v*(fm-1); }   /* Trái Ác Quỷ cường hoá: phần chỉ số trái tăng thêm */
+  { const F2=r.ace&&r.fruit2&&M.fruits[r.fruit2]&&M.fruits[r.fruit2].bonus; if(F2) for(const [s,v] of Object.entries(F2)) o[s]+=v; }   /* trái thứ 2 (Lỗ của Ace): cộng chỉ số của trái */   /* chỉ số phụ của vũ khí Thợ Rèn, công gốc (w.atk) tính trong muStats + phần cường hoá */
   const my=S.mythOf(p.look&&p.look.mount,p); if(my&&p.horse&&p.horse.own) for(const [s,v] of Object.entries(my.bonus)) o[s]+=v;   /* thần thú đang chọn */
   if(S.legendOwn(p,'pod')){ o.hp+=1.5; o.mp+=1.5; o.atk+=1.5; o.def+=1.5; }   /* Cái Pod của Kaixa: +150% mọi chỉ số */
   if(S.legendOwn(p,'airpod')) o.spell+=S.LEGEND.items.airpod.spell;   /* Airpod của VNPT: sức mạnh chiêu +500% */
@@ -45,19 +46,19 @@ function krTick(pl,t){ const p=pl.prof, top=p.look&&p.look.outfit&&p.look.outfit
 const offOf=p=>{ const k=rec(p).acc&&rec(p).acc.shield; return (k&&M.acc[k])||null; };
 // chiêu: 1–3 theo class, 4 Trái Ác Quỷ (nếu đã ăn), 5 chiêu riêng của set legacy đang mặc
 const skillsOf=(r,p)=>{ const L=[...(M.skills[r.cls]||[])], fs=r.fruit&&F[r.fruit]?F[r.fruit].skill:null, fm=S.fruitMul(r.fenh), lg=p&&lgOf(p), ls=lg&&M.legacy[lg].skill;   /* chiêu 4, 5 bị động (autoTick): không tốn mana; chiêu trái mạnh theo cấp cường hoá trái */
-  L[3]=fs?{...fs,mp:0,auto:1,...(fs.mul?{mul:+(fs.mul*fm).toFixed(3)}:{}),...(fs.heal?{heal:Math.min(.95,+(fs.heal*fm).toFixed(3))}:{})}:null; L[4]=ls?{...ls,mp:0,auto:1}:null; return L; };
+  L[3]=fs?{...fs,mp:0,auto:1,...(fs.mul?{mul:+(fs.mul*fm).toFixed(3)}:{}),...(fs.heal?{heal:Math.min(.95,+(fs.heal*fm).toFixed(3))}:{})}:null; L[4]=ls?{...ls,mp:0,auto:1}:null; const f2=r.ace&&r.fruit2&&F[r.fruit2]?F[r.fruit2].skill:null; L[5]=f2?{...f2,mp:0,auto:1}:null; return L; };   /* 6: trái thứ 2 (Lỗ của Ace) */
 // chiêu Trái Ác Quỷ (4) + chiêu set legacy (5) là chiêu bị động: đang đánh (đánh thường / tự bấm chiêu trong 4 giây qua) thì tự ra khi hết hồi chiêu và có boss / quái trong tầm;
 // chiêu hồi máu (Chữa Lành, set hồi máu) tự ra khi máu dưới 60%; không tốn mana (skillsOf); mỗi lượt 0,4 giây tự ra tối đa 1 chiêu
 const inReach=(pl,rg,t)=>[...LIVE.values()].some(B=>scOf(B)===pl.scene&&!(B.diveU>t)&&dist(pl,B.x,B.y)<=rg+radius(BS[B.id],B))||(()=>{ const X0=nearestExtra(pl); return !!(X0&&X0.d<=rg+X0.rad); })();
 function autoTick(t){ for(const pl of inScene()){ const s=pl.mus; if(!s||s.dead>t||pl.muDuel||(pl.autoAt||0)>t||stunned(s,t)) continue; pl.autoAt=t+400; const r=rec(pl.prof); if(!r.cls) continue;
   const L=skillsOf(r,pl.prof), fight=t-Math.max(s.basicAt||0,s.skAt||0)<4000;
-  for(const i of [3,4]){ const sk=L[i]; if(!sk||(s.cd[sk.k]||0)>t) continue;
+  for(const i of [3,4,5]){ const sk=L[i]; if(!sk||(s.cd[sk.k]||0)>t) continue;
     const go=sk.heal&&!sk.mul?s.hp<s.max*.6:sk.buff?fight:fight&&inReach(pl,sk.range||3,t); if(!go) continue;
     const x=C.handlers.mu(pl,{op:'skill',i,auto:1}); if(x&&!x.err){ send(pl,{t:'muauto',i,k:sk.k}); break; } } } }
 
 function view(pl){ const r=rec(pl.prof), m=st(pl); if(!m) return {cls:''}; const t=now();
   return {cls:r.cls,lv:r.lv,exp:r.exp,next:M.lvExp(r.lv),aspd:m.aspd,fx:fxOf(m,t),sub:{regen:+(M.regen.hp*(m.regen||1)).toFixed(4),gw:m.gw,armor:m.armor,crit:m.crit,drain:m.drain,shred:m.shred,tdmg:m.tdmg,cdr:m.cdr,spell:m.spell,slowp:m.slowp,chainp:m.chainp,aura:m.aura},hp:Math.round(m.hp),max:m.max,mp:Math.round(m.mp),mmax:m.mmax,cd:Object.fromEntries(Object.entries(m.cd).map(([k,v])=>[k,Math.max(0,v-t)])),
-    buff:(m.buff.def||0)>t?m.buff.def-t:0,dead:m.dead>t?m.dead-t:0,duel:pl.muDuel?pl.muDuel.other:0,w:r.w,l:r.l,fruit:r.fruit||'',wep:r.wep||'',lg:lgOf(pl.prof),enh:r.enh||{},fenh:r.fenh|0,sock:r.sock||{},kq:r.kq||{},kqs:kqNow(pl),acc:r.acc||{},accOwned:r.accOwned||{},pas:r.pas||{},pasB:r.pasB||{},sp:pasPts(r),crit:m.crit,cp:powerOf(pl.prof),atk:m.atk,def:m.def}; }   /* lực chiến tính 1 kiểu với bảng xếp hạng (powerOf) */
+    buff:(m.buff.def||0)>t?m.buff.def-t:0,dead:m.dead>t?m.dead-t:0,duel:pl.muDuel?pl.muDuel.other:0,w:r.w,l:r.l,fruit:r.fruit||'',fruit2:r.ace&&r.fruit2||'',ace:r.ace?1:0,wep:r.wep||'',lg:lgOf(pl.prof),enh:r.enh||{},fenh:r.fenh|0,sock:r.sock||{},kq:r.kq||{},kqs:kqNow(pl),acc:r.acc||{},accOwned:r.accOwned||{},pas:r.pas||{},pasB:r.pasB||{},sp:pasPts(r),crit:m.crit,cp:powerOf(pl.prof),atk:m.atk,def:m.def}; }   /* lực chiến tính 1 kiểu với bảng xếp hạng (powerOf) */
 // Vuốt Thần Kim Quy (data.js ENH.kq): đếm món có vuốt đang dùng (vũ khí, set đang mặc / giáp class, phụ kiện đang đeo)
 const kqEq=(p,r)=>{ const K=r.kq; if(!K) return []; return [r.wep,lgOf(p)||(r.cls?M.cls[r.cls].set:''),...Object.values(r.acc||{})].filter(k=>k&&K[k]); };
 const kqNow=pl=>{ const r=rec(pl.prof), e=kqEq(pl.prof,r); return S.kqOf(r.cls,e.length,Math.max(0,...e.map(k=>(r.kq[k]|0)-1))); };   /* r.kq[món] = cấp vuốt + 1 */
@@ -518,11 +519,17 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     if((pas[k]||0)>=Pd.max) return {err:`${Pd.name} đã tối đa`}; pas[k]=(pas[k]||0)+1; if(pl.mus) st(pl); markDirty(pl); push(pl); return {msg:`${Pd.name} lên cấp ${pas[k]}`}; }
   if(op==='pasreset'){ if(!Object.keys(r.pas||{}).length) return {err:'Chưa cộng điểm nào'}; if(!take(pl,200000)) return {err:'Đặt lại nội tại tốn 200.000đ'}; r.pas={}; if(pl.mus) st(pl); markDirty(pl); push(pl); return {msg:'Đã trả lại toàn bộ điểm nội tại'}; }
   // ăn Trái Ác Quỷ: mỗi người chỉ 1 trái, có chiêu thứ 4 (phím 4) + chỉ số cộng thêm
-  if(op==='eat'){ const k=String(m.k||''), f=F[k]; if(!f||!C.has(pl,'taq_'+k)) return {err:'Không có trái này'}; if(r.fruit) return {err:`Bạn đã ăn ${F[r.fruit].name} rồi! Ăn thêm trái nữa là nổ tung người đấy`}; if(!r.cls) return {err:'Chọn class ở Vệ binh trước'};
-    addItem(pl,'taq_'+k,-1); r.fruit=k; r.fenh=0; pl.mus=null; st(pl); markDirty(pl); push(pl); bcast({t:'mufx',k:'eat',to:pl.pid,fruit:k}); return {msg:`Ăn ${f.name}! Chiêu bị động mới (tự ra khi đánh): "${f.skill.name}". ${f.desc}`}; }
-  // xoá Trái Ác Quỷ đang ăn khỏi người (mất phí, trái cũ mất luôn) để ăn trái khác
-  if(op==='unfruit'){ if(!r.fruit) return {err:'Bạn chưa ăn Trái Ác Quỷ nào'}; const old=F[r.fruit]; if(!take(pl,M.fruitWipe)) return {err:`Xoá trái tốn ${fmt(M.fruitWipe)}`};
-    r.fruit=''; r.fenh=0; pl.mus=null; st(pl); markDirty(pl); push(pl); return {msg:`Đã xoá ${old?old.name:'Trái Ác Quỷ'} khỏi cơ thể, mất chiêu phím 4. Giờ ăn được trái khác`}; }
+  // Lỗ của Ace (Thợ Rèn, mua 1 lần giữ mãi): ăn được Trái Ác Quỷ thứ 2 (r.fruit2): cộng chỉ số của trái + chiêu bị động thứ 3 (ô 6)
+  if(op==='acebuy'){ if(!P.nearNpc(pl,'mu_smith')) return {err:'Gặp Thợ Rèn Huyền Thoại ở quảng trường'}; if(r.ace) return {err:`Bạn đã có ${M.ace.name} rồi`};
+    if(!shopPay(pl,M.ace.price)) return {err:`${M.ace.name} giá ${fmt(M.ace.price)}`}; r.ace=1; markDirty(pl); push(pl); bcast({t:'mufx',k:'eat',to:pl.pid,fruit:'mera'}); return {msg:`Đã có ${M.ace.name}! Giờ ăn được Trái Ác Quỷ thứ 2 ở Vệ binh`}; }
+  if(op==='eat'){ const k=String(m.k||''), f=F[k]; if(!f||!C.has(pl,'taq_'+k)) return {err:'Không có trái này'}; if(!r.cls) return {err:'Chọn class ở Vệ binh trước'};
+    const slot=!r.fruit?1:r.ace&&!r.fruit2?2:0; if(!slot) return {err:r.ace?`Đã ăn đủ 2 trái (${F[r.fruit].name}, ${F[r.fruit2].name})`:`Bạn đã ăn ${F[r.fruit].name} rồi! Ăn thêm trái nữa là nổ tung người đấy (trừ khi có ${M.ace.name} ở Thợ Rèn)`};
+    if(k===r.fruit||k===r.fruit2) return {err:'Đã ăn trái này rồi'};
+    addItem(pl,'taq_'+k,-1); if(slot===1){ r.fruit=k; r.fenh=0; } else r.fruit2=k; pl.mus=null; st(pl); markDirty(pl); push(pl); bcast({t:'mufx',k:'eat',to:pl.pid,fruit:k});
+    return {msg:`Ăn ${f.name}${slot===2?' (trái thứ 2)':''}! Chiêu bị động mới (tự ra khi đánh): "${f.skill.name}". ${f.desc}`}; }
+  // xoá Trái Ác Quỷ khỏi người (mất phí, trái mất luôn) để ăn trái khác; slot 2 = trái thứ 2 (Lỗ của Ace)
+  if(op==='unfruit'){ const two=(m.slot|0)===2, cur=two?r.fruit2:r.fruit; if(!cur) return {err:'Bạn chưa ăn Trái Ác Quỷ nào'}; const old=F[cur]; if(!take(pl,M.fruitWipe)) return {err:`Xoá trái tốn ${fmt(M.fruitWipe)}`};
+    if(two) r.fruit2=''; else { r.fruit=''; r.fenh=0; } pl.mus=null; st(pl); markDirty(pl); push(pl); return {msg:`Đã xoá ${old?old.name:'Trái Ác Quỷ'} khỏi cơ thể, mất chiêu bị động của trái. Giờ ăn được trái khác`}; }
   if(op==='wep'){ const k=String(m.k||''); if(k&&(!M.weapons[k]||!C.has(pl,k))) return {err:'Chưa có vũ khí này'}; r.wep=k||''; syncWep(p); C.refreshInfo(pl); pl.mus&&st(pl); markDirty(pl); push(pl); return {msg:k?`Cầm ${M.weapons[k].name}: ${M.weapons[k].desc}`:'Cất vũ khí'}; }
   if(op==='pick'){ const k=String(m.k||''), L=M.hidden[k], i=m.i|0, q=HID_Q[k]; if(!L||!L[i]) return {err:'?'}; if(p.quests[q]!=='active') return {err:'?'}; if(k==='lua_ma'&&!night()) return {err:'Đốm lửa ma chỉ hiện ban đêm'};
     const H=p.flags.muHid=p.flags.muHid||{}; if(H[k+i]) return {err:'Nhặt rồi'}; if(dist(pl,L[i][0],L[i][1])>2.2) return {err:'Lại gần hơn'}; H[k+i]=1; addItem(pl,k,1); markDirty(pl);

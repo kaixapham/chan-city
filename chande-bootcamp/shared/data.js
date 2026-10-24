@@ -1056,7 +1056,10 @@ const LC_ASC={lv:50,mul:1.2,bkb:{sec:2,cd:22,per:3,min:8},
     da:[['Tiny',{splash:3,atk:3,root:2,shred:1}],['Earthshaker',{root:3,splash:2,dr:2,cdr:2}],['Earth Spirit',{root:2,move:3,splash:2,cdr:2}]],
     vo:[['Ursa',{shred:2,ls:2,aspd:3,atk:2}],['Axe',{dr:3,splash:2,root:2,bkb:2}],['Troll Warlord',{aspd:4,bkb:2,ls:2,move:1}]]}};
 /* bộ chỉ số dạng Lv50 của 1 loài (cache): { hero, style 0 công · 1 thủ · 2 tốc, pts {k: điểm}, v {k: giá trị} } */
-const ASC_C={}; const lcAsc=sp=>{ if(ASC_C[sp]!==undefined) return ASC_C[sp]; const s=LC_SPECIES[sp]; if(!s||s.legend||s.npc) return ASC_C[sp]=null;
+/* Lính Cát huyền thoại (25/10, chủ game yêu cầu): lên tới Lv200, dạng Huyền Thoại (hình to, hologram, aura dưới chân, ×1,2 + bộ chỉ số phụ) mở ở Lv100; loài thường tối đa Lv50, thức tỉnh Lv50 */
+LC_ASC.legendLv=100; LC_ASC.legendMax=200;
+const lcMaxLv=sp=>LC_SPECIES[sp]&&LC_SPECIES[sp].legend?LC_ASC.legendMax:50, lcAscLv=sp=>LC_SPECIES[sp]&&LC_SPECIES[sp].legend?LC_ASC.legendLv:LC_ASC.lv;
+const ASC_C={}; const lcAsc=sp=>{ if(ASC_C[sp]!==undefined) return ASC_C[sp]; const s=LC_SPECIES[sp]; if(!s||s.npc) return ASC_C[sp]=null;
   const b=s.b, style=b[1]>=Math.max(b[0],b[2],b[3])?0:b[3]>=Math.max(b[0],b[2])?2:1, [hero,w]=(LC_ASC.heroes[s.t]||LC_ASC.heroes.thuong)[style], sum=b.reduce((a,v)=>a+v,0), B=Math.min(14,Math.round(10*500/sum)), tw=Object.values(w).reduce((a,v)=>a+v,0);
   const pts={}; let left=B; for(const [k,v] of Object.entries(w).sort((a,c)=>c[1]-a[1])){ const n=Math.max(1,Math.round(v*B/tw)); pts[k]=Math.min(n,left); left-=pts[k]; } if(left>0){ const k0=Object.keys(pts)[0]; pts[k0]+=left; }
   const v={}; for(const [k,n] of Object.entries(pts)) v[k]=k==='bkb'?Math.max(LC_ASC.bkb.min,LC_ASC.bkb.cd-LC_ASC.bkb.per*n):+(n*LC_ASC.unit[k]).toFixed(3); return ASC_C[sp]={hero,style,pts,v}; };
@@ -1519,7 +1522,8 @@ NPC_LOOKS.mu_shoes={name:'Tiệm Giày Lướt Gió',look:{gender:'nam',hair:'sw
 // lực chiến: công (theo tốc đánh + chỉ số phụ đánh ra: chí mạng, độc, phép, trừ giáp, giật sét, hút máu, làm chậm), thủ, máu (theo giáp), mana, hồi máu, hào quang
 const muPower=(s,x={})=>Math.round(s.atk*10*(.7+.3*(s.aspd||1))*(1+(x.crit||0)*.5+(x.tdmg||0)*.6+(x.spell||0)*.3+(x.shred||0)*.3+(x.chainp||0)*.3+(x.drain||0)*.4+(x.slowp||0)*.1)+s.def*8+s.hp*1.5*(1+(x.armor||0))+s.mp*.6+(x.regen||0)*40+(x.aura||0)*200);
 for(const [k,f] of Object.entries(MU.fruits)) ITEMS['taq_'+k]={name:f.name,icon:'fruit_'+k};
-MU.fruitWipe=5000000;   /* phí xoá Trái Ác Quỷ đang ăn khỏi người (ở Vệ binh) để ăn trái khác; trái cũ mất luôn */
+MU.fruitWipe=5000000;
+MU.ace={name:'Lỗ của Ace',price:40000000,desc:'Lỗ thủng in dấu nắm đấm dung nham trên ngực Ace: cơ thể chịu nổi thêm 1 Trái Ác Quỷ. Mua 1 lần ở Thợ Rèn, giữ mãi'};   /* cho ăn Trái Ác Quỷ thứ 2 (mu.js op acebuy / eat) */   /* phí xoá Trái Ác Quỷ đang ăn khỏi người (ở Vệ binh) để ăn trái khác; trái cũ mất luôn */
 // Thợ Rèn Huyền Thoại (store vũ khí MU): 50 vũ khí = 10 loại × 5 hệ. Loại quyết định kiểu vung khi ra chiêu + 1 chỉ số phụ, hệ quyết định hiệu ứng nổ ở mục tiêu.
 // Công +8%…+24% theo bậc hệ + bậc loại; sao 1–5 (5 sao = Huyền Thoại). Mua xong vào túi và cầm luôn, đổi vũ khí ở Thợ Rèn hoặc Vệ binh.
 MU.wtypes={dagger:{name:'Dao Găm',tier:0,bonus:{crit:.04},swing:'stab',desc:'đâm nhanh 2 nhát'},sword:{name:'Kiếm',tier:0,bonus:{hp:.03},swing:'slash',desc:'chém vòng cung'},
@@ -2757,7 +2761,7 @@ const mkRef=k=>{ if(!ITEMS[k]) return null;
   if(buy) return {v:buy,buy,npc,tier:Math.min(2,byV(buy)-1<0?0:byV(buy)-1)};   /* shop có bán thì không hiếm: tối đa bậc Hiếm (vũ khí MU đắt) */
   if(npc) return {v:Math.round(npc*MARKET.npcUp),buy:0,npc,tier:byV(npc*MARKET.npcUp)};
   return {v:100000,buy:0,npc:0,tier:1}; };
-return {fruitMul,kqOf,mkRef,enhMul,enhMain,CLUB_DOORS,LC_ASC,lcAsc,lcLeadAsc,lcLeadBn,lcEff,LCCLUB,GEAR,LCFOREST,PETS,PETFOOD,PETCFG,petState,KENNY,kennyWhere,STATE_LOAN,SHOPEE,EPL,EPL_CLUBS,T,RULES,LOOK,SLOTS,CLOTHES,FOOD,CROPS,FARM,PLACES,INTERIORS,CLUB,ITEMS,SKILLS,QUESTS,DAILY,FISH,KAYAK_PRICE,KAYAK_MIN,CAR_PRICE,TREASURE,FISHING,NPCS,NPC_LOOKS,PICKUPS,SPOTS,COINS,FORAGE,
+return {lcMaxLv,lcAscLv,fruitMul,kqOf,mkRef,enhMul,enhMain,CLUB_DOORS,LC_ASC,lcAsc,lcLeadAsc,lcLeadBn,lcEff,LCCLUB,GEAR,LCFOREST,PETS,PETFOOD,PETCFG,petState,KENNY,kennyWhere,STATE_LOAN,SHOPEE,EPL,EPL_CLUBS,T,RULES,LOOK,SLOTS,CLOTHES,FOOD,CROPS,FARM,PLACES,INTERIORS,CLUB,ITEMS,SKILLS,QUESTS,DAILY,FISH,KAYAK_PRICE,KAYAK_MIN,CAR_PRICE,TREASURE,FISHING,NPCS,NPC_LOOKS,PICKUPS,SPOTS,COINS,FORAGE,
   KAYAK_SPOT,BUOYS,CARS,BEAGLE_SPOT,CHICKEN_HOME,LAKE_Y,SPAWN,SOCIAL,ROOMS,BATHHOUSE,POOL,ACH,KE_JOB,WHEELIE,BIKES,SONGS,DANCE,RECEPTION,NEEDS,ROOM_ACTS,PHOTO_SPOTS,TRAVEL,JOB,WORK_TASKS,OFFICE_PERKS,WORK_WORDS,INTERVIEW,INTERVIEW_PICK,INTERVIEW_PASS,OFFICE,
   lvSpeed,OPTIMUS,MEGATRON,MCK,WILDLIFE,FOLLOWERS,OII,SHISHA,NPC_ROAM,roamPos,PIG_STEAL,LUMEN,DIEP,YENLANG,PICKLE,PK_SETS,DALAT,DL_FARM,DL_LAND,KE_LAND,MOTO,BIKESHARE,CSGT,PCAR,PARK,MUSEUM,TEMPLE,NETCAFE,BUTTERFLY,LO,DOGS,DAS,KE_YARD,ANIMALS,FEED,INGREDIENTS,RECIPES,COOK,DL_FISH,HORSE,CRATES,RACE,SELL,DEST,GRAB,grabFare,COURSES,MARKET,ACTS,ACT_DUR,FL,SCENE_DEST,SCENE_SIZE,
   ECON,fineOf,HOME,homeTier,homeDefault,homeGrid,homeFoot,homeSolid,homeAnchor,homeFits,homeCozy,homeScore,homeBuff,HAOSANG,hsPts,hsTier,hsBonus,loanOwed,LEGEND,legendDone,legendCount,legendOwn,legendAch,MU,muStats,muPower,mythOf,mythIdx,mountKey,XICHTHO,XT_ELS,xtBonus,ENH,gemCost,enhKind,shoeSpeed,DUONGVU,dvWhere,LAVI,HW_SETS,LC_TYPES,LC_EFF,LC_MOVES,LC_TYPE_MOVES,LC_SPECIES,LINHCAT,lcStats,lcStatsOf,lcHealFee,lcMoves,lcNext,lcWild,RF,NMOTION,GUARD,TOP_TITLES,BEARPLUS,VNPT,MIEU,lunarDate,holyDay,vnptServing,LOGIN7,LOGIN30,DAYQ,ALBUM,SEASON,seasonOn,pumpkinsNow,vnTime,WEEKDAYS,mealStatus,hunger,levelOf,fmt,plotState,lookToTemplate,gameMs,realTime,addDays,dayOfWeek,isWeekend,dailyTasks,otTask};

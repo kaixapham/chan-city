@@ -45,8 +45,8 @@ on('lc',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op;
   if(op==='badge'){ if(pl.lcb) return {err:'Đang đấu'}; const B=L.badge, sp=String(m.sp||''); if(!B.choices.includes(sp)) return {err:'?'}; if(!has(pl,B.item)) return {err:'Cần Huy Hiệu Pepe (hạ Pepe ở Làng Meme, Đất Phía Tây MU)'};
     const mon=mk(r,sp,B.lv), toParty=r.party.length<L.party; (toParty?r.party:r.box).push(mon); r.dex[sp]=2; addItem(pl,B.item,-1); markDirty(pl);
     return {ok:1,msg:`✨ ${SP[sp].name} Lv${B.lv} đã về ${toParty?'đội của bạn (xếp lên đầu đội để ra trận)':'máy gửi giữ'}!`,lc:view(p)}; }
-  if(op==='book'){ if(pl.lcb) return {err:'Đang đấu'}; const k=String(m.k||''), n=L.books[k], x=monOf(r,m.u); if(!n||!x) return {err:'?'}; if(x.lv>=50) return {err:'Đã đạt cấp tối đa 50'};
-    if(!has(pl,k)) return {err:`Cần ${S.ITEMS[k].name} (mua ở kệ hàng Trung tâm Lính Cát)`}; addItem(pl,k,-1); const ev=[]; for(let i=0;i<n&&x.lv<50;i++) lvUp(r,x,ev); markDirty(pl); LQ().ev(pl,'lv',x.sp); if(ev.some(e=>e.k==='evo')) LQ().ev(pl,'evo',x.sp);
+  if(op==='book'){ if(pl.lcb) return {err:'Đang đấu'}; const k=String(m.k||''), n=L.books[k], x=monOf(r,m.u); if(!n||!x) return {err:'?'}; if(x.lv>=S.lcMaxLv(x.sp)) return {err:`Đã đạt cấp tối đa ${S.lcMaxLv(x.sp)}`};
+    if(!has(pl,k)) return {err:`Cần ${S.ITEMS[k].name} (mua ở kệ hàng Trung tâm Lính Cát)`}; addItem(pl,k,-1); const ev=[]; for(let i=0;i<n&&x.lv<S.lcMaxLv(x.sp);i++) lvUp(r,x,ev); markDirty(pl); LQ().ev(pl,'lv',x.sp); if(ev.some(e=>e.k==='evo')) LQ().ev(pl,'evo',x.sp);
     const evo=ev.filter(e=>e.k==='evo').pop(), learn=ev.filter(e=>e.k==='learn').map(e=>MV[e.mv].name);
     return {msg:`📖 ${SP[x.sp].name} lên Lv${x.lv}!${learn.length?' Học chiêu '+learn.join(', ')+'.':''}${evo?` ✨ Tiến hoá thành ${SP[evo.to].name}!`:''}${ev.some(e=>e.k==='asc')?' 👑 Thức tỉnh dạng Huyền Thoại Lv50!':''}`,evo:evo?{from:ev.find(e=>e.k==='evo').from,to:evo.to}:null,asc:ev.some(e=>e.k==='asc')}; }
   // ăn Ngọc Cường Hoá: +1 → +12 (mỗi cấp +6% chỉ số), tỉ lệ như khắc đồ; Ngọc Huyền Thoại 80%; thất bại mất ngọc
@@ -150,7 +150,7 @@ function turnEnd(pl,ev){ const b=pl.lcb, r=rec(pl.prof), me=active(r,b), PZ=L.me
 // hạ đối thủ: EXP cho con đang ra sân, lên cấp, học chiêu, tiến hoá theo cấp; đội huấn luyện viên còn con thì con kế ra sân
 function foeDown(pl,ev){ const b=pl.lcb, p=pl.prof, r=rec(p), me=active(r,b), F=b.foe; ev.push({k:'faint',w:'foe',sp:F.sp});
   const gain=Math.round((20+F.lv*9)*[1,1.4,1.8][(SP[F.sp].st||1)-1]*(b.kind==='farm'?.7:b.kind==='gym'?1.5:1)*(b.mul||1)); me.exp+=gain; ev.push({k:'exp',n:gain,sp:me.sp});
-  while(me.lv<50&&me.exp>=S.lcNext(me.lv)){ me.exp-=S.lcNext(me.lv); lvUp(r,me,ev); }
+  while(me.lv<S.lcMaxLv(me.sp)&&me.exp>=S.lcNext(me.lv)){ me.exp-=S.lcNext(me.lv); lvUp(r,me,ev); }
   if(b.kind==='wild') LQ().ev(pl,'win',F.sp); LQ().ev(pl,'lv',me.sp); if(ev.some(e=>e.k==='evo')) LQ().ev(pl,'evo',me.sp);
   if(b.kind==='farm') p.daily.lcfarm=(p.daily.lcfarm||0)+1;
   if(b.kind==='wild'){ r.gone[b.key]=1; b.won=true; b.paid=true; const g=C.gainExp(pl,L.trainerExp); ev.push({k:'won',sp:F.sp,exp:g.exp}); markDirty(pl); return {ev,battle:bview(pl)}; }   // thắng con hoang: được quyền thu phục
@@ -158,7 +158,7 @@ function foeDown(pl,ev){ const b=pl.lcb, p=pl.prof, r=rec(p), me=active(r,b), F=
   return finish(pl,'win',ev); }
 // lên 1 cấp: thêm máu tối đa, học chiêu mới, tiến hoá khi đủ cấp; đủ Lv50 thì thức tỉnh dạng Huyền Thoại Lv50 (loài không phải huyền thoại)
 // con nào đã đủ cấp tiến hoá (vd mốc tiến hoá mới cấp 25) / đủ Lv50 thì tiến hoá, thức tỉnh luôn lúc chủ vào game
-const ascUp=me=>{ if(me.asc||me.lv<S.LC_ASC.lv||!S.lcAsc(me.sp)) return false; const mh=maxHp(me); me.asc=1; me.hp=Math.min(maxHp(me),me.hp+(maxHp(me)-mh)); return true; };
+const ascUp=me=>{ if(me.asc||me.lv<S.lcAscLv(me.sp)||!S.lcAsc(me.sp)) return false; const mh=maxHp(me); me.asc=1; me.hp=Math.min(maxHp(me),me.hp+(maxHp(me)-mh)); return true; };
 C.hook('login',pl=>{ const p=pl.prof; if(!p||!p.lc) return; const r=rec(p), done=[]; menLv(p);
   for(const me of [...r.party,...r.box]){ let E=SP[me.sp]&&SP[me.sp].evo; while(E&&me.lv>=E.lv){ const from=me.sp, ratio=me.hp/maxHp(me); me.sp=E.to; me.hp=Math.max(1,Math.round(maxHp(me)*ratio)); r.dex[me.sp]=2; done.push(`${SP[from].name} → ${SP[me.sp].name}`); E=SP[me.sp].evo; }
     if(ascUp(me)) done.push(`${SP[me.sp].name} thức tỉnh dạng Huyền Thoại Lv50`); }
