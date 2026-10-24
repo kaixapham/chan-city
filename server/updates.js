@@ -4,6 +4,7 @@
 'use strict';
 const fs=require('fs'), path=require('path'), W=require('./world');
 const LOG=[
+  {v:'2026-10-25q',title:'25/10 · Khung súng premium',items:['🔥 Thẻ súng ở Thợ Rèn có khung viền premium: viền xanh óng ánh chạy vòng, vệt sáng quét qua, lửa cháy bốc từ đáy; Minigun Huyền Thoại Chande viền vàng đỏ, lửa to hơn']},
   {v:'2026-10-25p',title:'25/10 · Minigun Chande 16 phát / giây',items:['👑 Minigun Huyền Thoại Chande giờ bắn 16 phát / giây (vượt trần tốc đánh 4 / giây của MU), mỗi phát vẫn toả 10 tia đạn']},
   {v:'2026-10-25o',title:'25/10 · 6 súng siêu mạnh ở Thợ Rèn MU',items:['🔫 Thợ Rèn MU bán 6 khẩu súng (100–300 triệu), bắn xa hơn vũ khí thường, cường hoá + khảm được: Ổ Quay Cao Bồi, Súng Nước Cola, Tiểu Liên Bóng Đêm, Súng Plasma Băng Xanh, Súng Ngắm Thần Mặt Trời','👑 Minigun Huyền Thoại Chande (300 triệu): bắn liên tục (tốc đánh +60%), mỗi phát toả 10 tia đạn trúng tới 10 quái / boss']},
   {v:'2026-10-25n',title:'25/10 · 16 Trái Ác Quỷ · cường hoá trái thứ 2',items:['🍇 Thêm 10 Trái Ác Quỷ: Cát, Ánh Sáng, Dung Nham, Phẫu Thuật, Phân Mảnh, Bánh Dày, Sợi Chỉ, Chấn Động, Hoa, Phượng Hoàng. Rơi từ Luffy Gear 5 như các trái cũ','⚖ Cân bằng cả 16 trái: chiêu đánh 1 mục tiêu ngang sức nhau, chiêu lan / làm chậm / choáng / hút máu yếu hơn một chút để bù; chỉ số trái tổng khoảng 16–20% (Gomu bớt mạnh, Dung Nham và Chấn Động đánh to nhất nhưng hồi chiêu lâu)','🔨 Trái thứ 2 (Lỗ của Ace) cũng cường hoá được ở Phù Thuỷ Cường Hoá, cấp riêng với trái 1']},
