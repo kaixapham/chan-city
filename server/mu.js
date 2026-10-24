@@ -63,6 +63,11 @@ function view(pl){ const r=rec(pl.prof), m=st(pl); if(!m) return {cls:''}; const
 // Vuốt Thần Kim Quy (data.js ENH.kq): đếm món có vuốt đang dùng (vũ khí, set đang mặc / giáp class, phụ kiện đang đeo)
 const kqEq=(p,r)=>{ const K=r.kq; if(!K) return []; return [r.wep,lgOf(p)||(r.cls?M.cls[r.cls].set:''),...Object.values(r.acc||{})].filter(k=>k&&K[k]); };
 const kqNow=pl=>{ const r=rec(pl.prof), e=kqEq(pl.prof,r); return S.kqOf(r.cls,e.length,Math.max(0,...e.map(k=>(r.kq[k]|0)-1))); };   /* r.kq[món] = cấp vuốt + 1 */
+// súng huyền thoại (MU.guns spray): mỗi phát đánh thường toả n tia đạn, thêm n−1 quái / boss quanh mục tiêu (trong r ô) dính k sát thương
+function gunSpray(pl,SP,B,X0,d,t){ const sc=pl.scene, tx=B?B.x:X0.x, ty=B?B.y:X0.y, dd=Math.max(1,Math.round(d*SP.k)), hit=[];
+  for(const src of EXTRA) if(src.around) for(const o of src.around(tx,ty,SP.r,SP.n-1-hit.length,X0&&X0.id,sc)){ if(hit.length>=SP.n-1) break; o.hit(dd,pl,{}); hit.push([o.x,o.y,dd]); }
+  for(const b2 of [...LIVE.values()]) if(hit.length<SP.n-1&&b2!==B&&scOf(b2)===sc&&Math.hypot(b2.x-tx,b2.y-ty)<=SP.r+radius(BS[b2.id],b2)){ const x=dmgBoss(b2,pl,dd,t); if(x>0) hit.push([b2.x,b2.y,x]); }
+  bcast({t:'mufx',k:'gunspray',from:pl.pid,x:tx,y:ty,n:SP.n,pts:hit}); }
 // đánh thường trúng: lan sang quái / boss quanh (bắn lan quanh mục tiêu, chém lan quanh mình), có tỉ lệ gọi Rồng Thần cắn % máu tối đa mục tiêu + quái quanh
 function kqHit(pl,KQ,R,B,X0,d,t){ const sc=pl.scene, tx=B?B.x:X0.x, ty=B?B.y:X0.y, ban=KQ.sty==='ban', cx=ban?tx:pl.x/T, cy=ban?ty:pl.y/T, rr=ban?KQ.r:R, skip=X0&&X0.id;
   const dd=Math.max(1,Math.round(d*KQ.splash)), hit=[];
@@ -543,7 +548,7 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     for(const x of inScene()) note(x,`⚔ ${q.prof.name} và ${p.name} bắt đầu thách đấu!`,'quest'); return {ok:true}; }
   // đánh thường (client tự gửi khi đứng gần quái / boss): ưu tiên mục tiêu client chỉ (to = 'boss:id' / 'mob:id') nếu trong tầm, không thì con gần nhất; nhịp theo tốc đánh
   if(op==='basic'){ if(s.dead>t||pl.muDuel) return {}; if(stunned(s,t)) return {next:300}; const gap=1000/(s.aspd||1)*aslowOf(s,t); if(t-(s.basicAt||0)<gap*.85) return {next:gap-(t-(s.basicAt||0))};
-    const KQ=kqNow(pl), R=(M.cls[r.cls].reach||M.basic.range)+(KQ?KQ.reach:0), want=String(m.to||''); let B=null, X0=null;   /* Vuốt Thần Kim Quy: đánh xa hơn */
+    const KQ=kqNow(pl), R=(M.cls[r.cls].reach||M.basic.range)+(KQ?KQ.reach:0)+((M.weapons[r.wep]||{}).reach||0), want=String(m.to||''); let B=null, X0=null;   /* Vuốt Thần Kim Quy: đánh xa hơn */
     if(want.startsWith('boss:')){ const b=LIVE.get(want.slice(5)); if(b&&scOf(b)===pl.scene&&!(b.diveU>t)&&dist(pl,b.x,b.y)<=R+radius(BS[b.id],b)) B=b; }
     else if(want.includes(':')){ const [pk,pi]=want.split(':'); for(const src of EXTRA) if((src.kind||'mob')===pk){ const o=src.byId&&src.byId(+pi,pl); if(o&&o.d<=R+o.rad){ X0=o; break; } } }
     if(!B&&!X0){ const nb=[...LIVE.values()].filter(b=>scOf(b)===pl.scene&&!(b.diveU>t)).map(b=>[b,dist(pl,b.x,b.y)-radius(BS[b.id],b)]).filter(([,d])=>d<=R).sort((a,c)=>a[1]-c[1])[0], nx=nearestExtra(pl);
@@ -551,7 +556,7 @@ on('mu',(pl,m)=>{ const p=pl.prof, r=rec(p), op=m.op, t=now(); if(!inMu(pl)) ret
     if(!B&&!X0) return {};
     krTick(pl,t); s.basicAt=t; const crit=Math.random()<s.crit, raw=s.atk*M.basic.mul*(.9+Math.random()*.2)*(M.cls[r.cls].magic?1+s.spell:1), def=B?BS[B.id].def:X0.def, d=Math.max(1,Math.round((raw-def*.5*(1-s.shred))*(crit?1.5:1)+s.atk*s.tdmg*.5));
     let to, miss=0; if(B){ const dd=dmgBoss(B,pl,d,t,'basic'); miss=missOf(dd); to='boss:'+B.id; } else to=X0.hit(d,pl,{k:'basic'});
-    if(s.drain) s.hp=Math.min(s.max,s.hp+Math.round(d*s.drain*(1-gwOf(s,t)))); if(!miss){ procs(pl,s,B,X0,d,t); if(KQ) kqHit(pl,KQ,R,B,X0,d,t); const MG=M.cls[r.cls].magic; if(MG) splash(pl,{aoe:MG.r,el:'arcane'},B?B.x:X0.x,B?B.y:X0.y,B,X0,d*MG.k/.6,t); } W.setAct(pl,'attack',.25);
+    if(s.drain) s.hp=Math.min(s.max,s.hp+Math.round(d*s.drain*(1-gwOf(s,t)))); if(!miss){ procs(pl,s,B,X0,d,t); if(KQ) kqHit(pl,KQ,R,B,X0,d,t); const WG=M.weapons[r.wep]; if(WG&&WG.spray) gunSpray(pl,WG.spray,B,X0,d,t); const MG=M.cls[r.cls].magic; if(MG) splash(pl,{aoe:MG.r,el:'arcane'},B?B.x:X0.x,B?B.y:X0.y,B,X0,d*MG.k/.6,t); } W.setAct(pl,'attack',.25);
     if(!miss&&s.off&&s.off.dbl&&Math.random()<s.off.dbl){ if(B){ if(dmgBoss(B,pl,d,t,'basic')>0) procs(pl,s,B,X0,d,t); } else X0.hit(d,pl,{k:'basic'}); bcast({t:'mufx',k:'dbl',from:pl.pid,to,dmg:d}); }   /* Động cơ Musk: đánh liền 2 đòn */
     const wv=M.weapons[r.wep]; bcast({t:'mufx',k:M.skills[r.cls][0].k,basic:1,from:pl.pid,to,dmg:miss?0:d,miss,crit,w:wv&&wv.store?r.wep:'',wl:(r.enh||{})[r.wep]||0,ws:(r.sock||{})[r.wep]?1:0}); return {ok:1,to,next:gap}; }   /* hiệu ứng = chiêu 1 của class */
   if(op==='pen'){ const I=S.LEGEND.items.but; if(!S.legendOwn(p,'but')) return {err:`Chưa ghép đủ ${S.LEGEND.need} mảnh ${I.name}`}; if(s.dead>t) return {err:'Đang gục'}; const lg=p.legend; if((lg.butAt||0)>t) return {err:`Bút đang hồi, ${Math.ceil((lg.butAt-t)/1000)} giây nữa`};   /* Cây Bút của Redtype */

@@ -2738,6 +2738,16 @@ ENH.fruit={per:.07}; const fruitMul=L=>1+(L||0)*ENH.fruit.per;
 { const TS=Array.isArray(LEGEND.tasks)?LEGEND.tasks:Object.values(LEGEND.tasks), lb=(t,v)=>t.money?`${v/1e6} triệu`:String(v);
   for(const t of TS) if(t.it==='pod'&&t.t==='ach'&&t.need>1){ const n=t.money?Math.ceil(t.need/5/1e6)*1e6:Math.max(1,Math.ceil(t.need/5)); t.label=t.label.replace(lb(t,t.need),lb(t,n)); t.need=n; }
   const lf=TS.find(t=>t.st==='luffy'); if(lf){ lf.label=lf.label.replace(String(lf.need),'50'); lf.need=50; } }
+/* Súng siêu mạnh ở Thợ Rèn (25/10, chủ game yêu cầu): 6 khẩu 100–300 triệu, bắn xa hơn (reach cộng vào tầm đánh thường), vẽ ở art16 (type 'gun', gk = mẫu súng), ra đòn kiểu súng (maps8 wpnStep 'gun').
+   Khẩu huyền thoại Chande: bắn liên tục (tốc đánh rất cao), mỗi phát toả 10 tia đạn (spray: thêm 9 mục tiêu quanh mục tiêu chính, mỗi tia 40% sát thương) */
+MU.guns={
+  vw_gun_revolver:{name:'Ổ Quay Cao Bồi',el:'thunder',star:5,price:100000000,atk:.45,reach:2.5,bonus:{crit:.1,tdmg:.05},col:'#f4f0e0',desc:'Ổ quay bạc báng gỗ: phát nào cũng chí mạng cao'},
+  vw_gun_cola:{name:'Súng Nước Cola',el:'ice',star:5,price:120000000,atk:.45,reach:3,bonus:{slowp:.25,aspd:.15},col:'#7af0b0',desc:'Bình cola áp suất cao: bắn tia nước ngọt làm quái chậm lại'},
+  vw_gun_shadow:{name:'Tiểu Liên Bóng Đêm',el:'void',star:5,price:150000000,atk:.55,reach:3,bonus:{aspd:.25,crit:.06},col:'#ff4a4a',desc:'Tiểu liên đen đèn đỏ: xả đạn nhanh'},
+  vw_gun_plasma:{name:'Súng Plasma Băng Xanh',el:'ice',star:5,price:180000000,atk:.6,reach:3.5,bonus:{aspd:.2,chainp:.2},col:'#4ab0ff',desc:'Súng năng lượng trắng xanh: đạn plasma giật lan sang quái gần'},
+  vw_gun_aztec:{name:'Súng Ngắm Thần Mặt Trời',el:'thunder',star:5,price:220000000,atk:.75,reach:5,bonus:{crit:.15,shred:.25},col:'#3ae8d8',desc:'Súng ngắm hoa văn cổ vàng ngọc: bắn rất xa, xuyên giáp'},
+  vw_gun_chande:{name:'Minigun Huyền Thoại Chande',el:'fire',star:5,price:300000000,atk:.8,reach:3.5,legend:1,spray:{n:10,r:4,k:.4},bonus:{aspd:.6,crit:.08},col:'#ff3a2a',desc:'HUYỀN THOẠI · 6 nòng xoay đầu lâu đỏ: bắn liên tục, mỗi phát toả 10 tia đạn'}};
+for(const [k,g] of Object.entries(MU.guns)){ MU.weapons[k]={...g,type:'gun',gk:k.slice(7),store:true,gun:1}; ITEMS[k]={name:g.name,icon:'wpn_'+k.slice(3)}; }
 /* Trái Ác Quỷ (25/10, chủ game yêu cầu): thêm 10 trái (đủ 16) + cân bằng cả 16 theo 1 thước: chiêu đánh 1 mục tiêu ≈ 0,33 lần công / giây hồi chiêu, chiêu lan hoặc có khống chế (chậm, choáng, hút máu, giảm hồi máu) thấp hơn,
    chiêu hồi máu cho đội; chỉ số trái tổng ~16–20%. fx: kiểu hiệu ứng client của trái mới (maps8 ffxStep: beam tia, burst cầu nổ, aoe nổ lan, heal hồi máu) */
 { const NF={
